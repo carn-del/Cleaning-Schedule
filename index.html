@@ -418,15 +418,22 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
 }
 .fc-event:hover { background-color: var(--primary-dark) !important; }
 
-/* Checkout tail — 1/5 width stub on the checkout day */
-.fc-checkout-tail {
-  background-color: var(--primary) !important;
-  border: none !important;
-  border-radius: 0 4px 4px 0 !important;
-  opacity: 0.85;
+/* Checkout tail — FC event wrapper is transparent; visual is the inner stub div */
+.fc-event.fc-checkout-tail {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
-.fc-checkout-tail .fc-event-title { display: none; }
-/* Hide tail rows in list/agenda view — they'd just show as blank entries */
+/* The actual visible 20% stub bar */
+.checkout-stub-bar {
+  width: 20%;
+  height: 100%;
+  min-height: 16px;
+  background: var(--primary);
+  border-radius: 0 5px 5px 0;
+  opacity: 0.9;
+}
+/* Hide tail entries in list/agenda view */
 .fc-list-event.fc-checkout-tail { display: none !important; }
 [data-theme="dark"] .fc { color: var(--text); }
 [data-theme="dark"] .fc-theme-standard td,
@@ -756,12 +763,13 @@ function initFullCalendar(proxiedUrl) {
     firstDay: 1,
     height: 'auto',
     events: [...fcEvents, ...checkoutTails],
-    eventDidMount: function(info) {
-      // Shrink the harness to 20% width so the tail looks like a short stub
-      if (info.event.classNames.includes('fc-checkout-tail')) {
-        const harness = info.el.closest('.fc-daygrid-event-harness');
-        if (harness) harness.style.width = '20%';
+    eventContent: function(arg) {
+      // For checkout tails, render a custom inner stub instead of the default bar.
+      // The FC event wrapper is transparent (via CSS); the stub div provides the visual.
+      if (arg.event.classNames.includes('fc-checkout-tail')) {
+        return { html: '<div class="checkout-stub-bar"></div>' };
       }
+      // All other events use FC's default rendering
     }
   });
 
