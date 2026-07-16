@@ -409,14 +409,19 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
   background: var(--primary-dark) !important;
   border-color: var(--primary-dark) !important;
 }
-.fc-event {
+/* Regular booking events — exclude background events so they keep their own colour */
+.fc-event:not(.fc-bg-event) {
   background-color: var(--primary) !important;
   border: none !important;
   font-weight: 600;
   border-radius: 5px;
   cursor: pointer;
 }
-.fc-event:hover { background-color: var(--primary-dark) !important; }
+.fc-event:not(.fc-bg-event):hover { background-color: var(--primary-dark) !important; }
+
+/* Checkout day: subtle pink tint behind everything */
+.fc-bg-event { opacity: 1 !important; }
+.fc-checkout-hl { background-color: rgba(255, 56, 92, 0.18) !important; }
 [data-theme="dark"] .fc { color: var(--text); }
 [data-theme="dark"] .fc-theme-standard td,
 [data-theme="dark"] .fc-theme-standard th,
@@ -746,13 +751,15 @@ function initFullCalendar(proxiedUrl) {
     fcCalendar.addEventSource({
       id: 'checkout-highlights',
       events: globalEvents.map(ev => {
+        // Use ISO date strings so FullCalendar treats these as all-day events
+        const checkoutStr = ymd(ev.dtend);
         const nextDay = new Date(ev.dtend);
         nextDay.setDate(nextDay.getDate() + 1);
+        const nextStr = ymd(nextDay);
         return {
-          start: ev.dtend,
-          end: nextDay,
+          start: checkoutStr,
+          end: nextStr,
           display: 'background',
-          color: 'rgba(255, 56, 92, 0.22)',
           classNames: ['fc-checkout-hl']
         };
       })
