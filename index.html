@@ -355,12 +355,19 @@ body {
 }
 .cl-body { padding: 0 18px 18px; display: none; }
 .cl-body.open { display: block; }
-.cl-group-title {
-  font-size: 12px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: .6px; color: var(--text-muted);
-  margin: 14px 0 8px; padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+.cl-section-hdr {
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .5px; margin: 18px 0 10px;
+  padding: 9px 12px; border-radius: 8px;
+  display: flex; align-items: center; gap: 7px;
 }
+.cl-section-hdr:first-child { margin-top: 4px; }
+.cl-s-clean  { background: rgba(255,56,92,.1);   color: #c41e3a; }
+.cl-s-inv    { background: rgba(49,130,206,.1);   color: #2b6cb0; }
+.cl-s-refill { background: rgba(56,161,105,.1);   color: #276749; }
+[data-theme="dark"] .cl-s-clean  { background: rgba(255,56,92,.18);  color: #fc8181; }
+[data-theme="dark"] .cl-s-inv    { background: rgba(99,179,237,.18); color: #90cdf4; }
+[data-theme="dark"] .cl-s-refill { background: rgba(104,211,145,.18);color: #68d391; }
 .cl-item {
   display: flex; align-items: center; gap: 12px;
   padding: 11px 0; border-bottom: 1px solid var(--border);
@@ -596,13 +603,16 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
       <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">
         Tap items to check off. Selecting a cleaning card auto-resets this list.
       </p>
-      <div class="cl-progress" id="clProgress">0 / 27 completed</div>
-      <progress id="clBar" max="27" value="0"></progress>
+      <div class="cl-progress" id="clProgress">0 / 0 completed</div>
+      <progress id="clBar" max="1" value="0"></progress>
 
-      <div class="cl-group-title">🧹 Cleaning Tasks</div>
+      <div class="cl-section-hdr cl-s-clean">🧹 Cleaning Tasks</div>
       <div id="clCleaningList"></div>
 
-      <div class="cl-group-title">🧴 Refill &amp; Restock Items</div>
+      <div class="cl-section-hdr cl-s-inv">📦 Inventory Check — make sure these are still in the apartment</div>
+      <div id="clInventoryList"></div>
+
+      <div class="cl-section-hdr cl-s-refill">🧴 Refill &amp; Restock</div>
       <div id="clRefillList"></div>
 
       <button class="cl-reset-btn" onclick="resetChecklist()">🔄 Reset All Checkboxes</button>
@@ -1182,7 +1192,6 @@ function shareWhatsApp(i) {
 // ═══════════════════════════════════════
 const CLEANING_TASKS = [
   'Strip all bed linens and pillowcases',
-  'Launder linens on hot cycle',
   'Make beds with fresh clean linens',
   'Vacuum all floors, carpets & rugs',
   'Mop hard floors',
@@ -1190,6 +1199,8 @@ const CLEANING_TASKS = [
   'Wipe bathroom mirrors & fixtures',
   'Wipe kitchen counters & splashback',
   'Clean stovetop, oven & microwave inside',
+  'Check the inside of the microwave',
+  'Check inside of the oven',
   'Clean refrigerator (remove old food)',
   'Wash dishes / run & empty dishwasher',
   'Empty all rubbish bins & replace liners',
@@ -1200,33 +1211,46 @@ const CLEANING_TASKS = [
   'Final walkthrough — all rooms ✔',
 ];
 
+const INVENTORY_ITEMS = [
+  'The 3 supply storage units',
+  'Ironing board',
+  'Iron',
+  'Hairdryer (under bathroom sink cabinet)',
+  'The 3 containers for body wash, shampoo & conditioner',
+  'Chess set (in the TV cabinet)',
+  '4 throw pillows',
+  'Throw blanket',
+  'Orchid',
+  'Utensils in the drawer',
+  'Bowls, plates, mugs, wine glasses & children\'s utensils (cupboard above coffee machine)',
+];
+
 const REFILL_ITEMS = [
-  'Toilet paper (min. 4 rolls per bathroom)',
-  'Paper towels / kitchen roll',
-  'Hand soap — all bathrooms & kitchen',
-  'Dish soap & sponge',
-  'Coffee pods / ground coffee',
-  'Tea bags & sugar sachets',
-  'Condiments: oil, salt & pepper',
-  'Shower gel / shampoo / conditioner',
-  'Fresh bin liners in all bins',
+  'Toilet paper (min. 4 rolls)',
+  'Hand soap',
+  'Body wash',
+  'Shampoo',
+  'Conditioner',
+  'Laundry liquid (preferably pods)',
+  'Dish soap',
+  'Sponge for washing dishes',
+  'Trash bags',
   'Check & replace TV remote batteries',
+  'Check & replace air conditioner remote batteries',
   'Inspect for burned-out light bulbs',
 ];
 
-const ALL_TASKS = [...CLEANING_TASKS, ...REFILL_ITEMS];
+const ALL_TASKS = [...CLEANING_TASKS, ...INVENTORY_ITEMS, ...REFILL_ITEMS];
 const CL_PREFIX = 'cl:';
 
 function buildChecklist() {
   const cl = document.getElementById('clCleaningList');
+  const il = document.getElementById('clInventoryList');
   const rl = document.getElementById('clRefillList');
 
-  CLEANING_TASKS.forEach((task, i) => {
-    cl.appendChild(makeCheckItem(task, `ct_${i}`));
-  });
-  REFILL_ITEMS.forEach((item, i) => {
-    rl.appendChild(makeCheckItem(item, `ri_${i}`));
-  });
+  CLEANING_TASKS.forEach((task, i)  => { cl.appendChild(makeCheckItem(task, `ct_${i}`)); });
+  INVENTORY_ITEMS.forEach((item, i) => { il.appendChild(makeCheckItem(item, `iv_${i}`)); });
+  REFILL_ITEMS.forEach((item, i)    => { rl.appendChild(makeCheckItem(item, `ri_${i}`)); });
 
   document.getElementById('clBar').max = ALL_TASKS.length;
   updateClProgress();
@@ -1262,8 +1286,9 @@ function toggleCheckItem(id) {
 
 function updateClProgress() {
   let done = 0;
-  CLEANING_TASKS.forEach((_,i) => { if (localStorage.getItem(`${CL_PREFIX}ct_${i}`) === '1') done++; });
-  REFILL_ITEMS.forEach((_,i)   => { if (localStorage.getItem(`${CL_PREFIX}ri_${i}`) === '1') done++; });
+  CLEANING_TASKS.forEach((_,i)  => { if (localStorage.getItem(`${CL_PREFIX}ct_${i}`) === '1') done++; });
+  INVENTORY_ITEMS.forEach((_,i) => { if (localStorage.getItem(`${CL_PREFIX}iv_${i}`) === '1') done++; });
+  REFILL_ITEMS.forEach((_,i)    => { if (localStorage.getItem(`${CL_PREFIX}ri_${i}`) === '1') done++; });
   const total = ALL_TASKS.length;
   document.getElementById('clProgress').textContent = `${done} / ${total} completed`;
   document.getElementById('clBar').value = done;
@@ -1273,6 +1298,10 @@ function resetChecklist(silent = false) {
   CLEANING_TASKS.forEach((_,i) => {
     const cb = document.getElementById(`ct_${i}`);
     if (cb) { cb.checked = false; localStorage.removeItem(`${CL_PREFIX}ct_${i}`); }
+  });
+  INVENTORY_ITEMS.forEach((_,i) => {
+    const cb = document.getElementById(`iv_${i}`);
+    if (cb) { cb.checked = false; localStorage.removeItem(`${CL_PREFIX}iv_${i}`); }
   });
   REFILL_ITEMS.forEach((_,i) => {
     const cb = document.getElementById(`ri_${i}`);
