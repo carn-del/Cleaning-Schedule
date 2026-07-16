@@ -620,6 +620,41 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
 
 <script>
 // ═══════════════════════════════════════
+// FIREBASE — shared notes storage
+// ═══════════════════════════════════════
+const FIREBASE_URL = 'https://airbnb-cleaner-calendar-default-rtdb.asia-southeast1.firebasedatabase.app';
+
+// Firebase keys can't contain . # $ / [ ]
+function fbKey(uid) { return uid.replace(/[.#$\/\[\]]/g, '_'); }
+
+async function saveNoteToFirebase(uid, type, text) {
+  try {
+    await fetch(`${FIREBASE_URL}/notes/${fbKey(uid)}/${type}.json`, {
+      method: 'PUT',
+      body: JSON.stringify(text)
+    });
+  } catch(e) { /* silent — localStorage copy already saved */ }
+}
+
+async function syncNotesFromFirebase() {
+  try {
+    const res  = await fetch(`${FIREBASE_URL}/notes.json`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data) return;
+    // data = { [fbKey(uid)]: { checkin: 'text', checkout: 'text' } }
+    document.querySelectorAll('.notes-ta').forEach(ta => {
+      const bucket = data[fbKey(ta.dataset.uid)];
+      if (!bucket) return;
+      const text = bucket[ta.dataset.type];
+      if (text == null) return;
+      ta.value = text;
+      localStorage.setItem(`note_${ta.dataset.type}:${ta.dataset.uid}`, text);
+    });
+  } catch(e) { /* silent */ }
+}
+
+// ═══════════════════════════════════════
 // THEME
 // ═══════════════════════════════════════
 (function initTheme() {
@@ -1043,6 +1078,7 @@ function renderTimeline(events) {
   });
 
   tl.innerHTML = html;
+  syncNotesFromFirebase(); // overlay latest notes from Firebase over localStorage
 }
 
 function escHtml(s) {
@@ -1088,6 +1124,7 @@ function autoSaveNote(ta) {
   autoSaveTimers[i] = setTimeout(() => {
     const key = `note_${ta.dataset.type}:${ta.dataset.uid}`;
     localStorage.setItem(key, ta.value);
+    saveNoteToFirebase(ta.dataset.uid, ta.dataset.type, ta.value);
     const si = document.getElementById(`si_${i}`);
     if (si) { si.textContent = '✓ Auto-saved'; setTimeout(() => si.textContent = '', 2000); }
   }, 700);
@@ -1097,6 +1134,7 @@ function saveNote(i) {
   const ta  = document.getElementById(`ta_${i}`);
   const key = `note_${ta.dataset.type}:${ta.dataset.uid}`;
   localStorage.setItem(key, ta.value);
+  saveNoteToFirebase(ta.dataset.uid, ta.dataset.type, ta.value);
   toast('✅ Note saved!');
 }
 
