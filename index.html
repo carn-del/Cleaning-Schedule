@@ -410,13 +410,18 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
   border-color: var(--primary-dark) !important;
 }
 .fc-event {
-  background-color: var(--primary) !important;
   border: none !important;
   font-weight: 600;
   border-radius: 5px;
   cursor: pointer;
 }
-.fc-event:hover { background-color: var(--primary-dark) !important; }
+.fc-event:not(.booking-stub) {
+  background-color: var(--primary) !important;
+}
+.fc-event:not(.booking-stub):hover { background-color: var(--primary-dark) !important; }
+/* checkout-day stub: transparent outer shell, 20%-wide inner bar at left edge */
+.booking-stub { background-color: transparent !important; box-shadow: none !important; pointer-events: none; }
+.booking-stub .fc-event-main { width: 20%; height: 18px; background: var(--primary); border-radius: 0 4px 4px 0; }
 
 [data-theme="dark"] .fc { color: var(--text); }
 [data-theme="dark"] .fc-theme-standard td,
@@ -715,19 +720,27 @@ function initFullCalendar(proxiedUrl) {
   // Destroy existing instance before re-init
   if (fcCalendar) { fcCalendar.destroy(); fcCalendar = null; }
 
-  // Extend every event end by 1 day so the bar runs into the checkout day.
-  // FullCalendar then naturally renders the cross-week break with a flat right
-  // edge on the last booked night and a flat left edge on the checkout day —
-  // giving the visual of one continuous bar across the row break.
-  const fcEvents = globalEvents.map(ev => {
-    const extEnd = new Date(ev.dtend);
-    extEnd.setDate(extEnd.getDate() + 1);
-    return {
+  // Two events per booking:
+  //   1. Main bar: dtstart → dtend (exclusive) = covers check-in through last booked night
+  //   2. Stub: dtend → dtend+1 = 1-day event on the checkout day, rendered at 20% width via CSS
+  // This ensures the stub always lands at the exact checkout-day column regardless of week boundaries.
+  const fcEvents = [];
+  globalEvents.forEach(ev => {
+    fcEvents.push({
       title: ev.summary || 'Reserved',
       start: ymd(ev.dtstart),
-      end: ymd(extEnd),
+      end: ymd(ev.dtend),
       allDay: true
-    };
+    });
+    const stubEnd = new Date(ev.dtend);
+    stubEnd.setDate(stubEnd.getDate() + 1);
+    fcEvents.push({
+      title: '',
+      start: ymd(ev.dtend),
+      end: ymd(stubEnd),
+      allDay: true,
+      classNames: ['booking-stub']
+    });
   });
 
   fcCalendar = new FullCalendar.Calendar(el, {
@@ -739,21 +752,7 @@ function initFullCalendar(proxiedUrl) {
     },
     firstDay: 1,
     height: 'auto',
-    events: fcEvents,
-    eventDidMount: function(info) {
-      const isEnd   = info.el.classList.contains('fc-event-end');
-      const isStart = info.el.classList.contains('fc-event-start');
-      // Cross-row last segment = checkout day. Shrink harness to 20% of its width.
-      // Same-row events (both start+end on same segment) keep full width.
-      if (isEnd && !isStart) {
-        setTimeout(function() {
-          const harness = info.el.closest('.fc-daygrid-event-harness');
-          if (harness && harness.offsetWidth > 0) {
-            harness.style.width = (harness.offsetWidth * 0.2) + 'px';
-          }
-        }, 0);
-      }
-    }
+    events: fcEvents
   });
 
   fcCalendar.render();
