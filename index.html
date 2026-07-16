@@ -824,15 +824,18 @@ function initFullCalendar(proxiedUrl) {
     events: fcEvents
   });
 
-  fcCalendar.render();
-  document.getElementById('fc-status').textContent = `${fcEvents.length} booking${fcEvents.length !== 1 ? 's' : ''} loaded`;
-
-  // Open the calendar view panel automatically on first load
+  // Reveal the panel BEFORE rendering so FullCalendar can measure its dimensions
   const body = document.getElementById('calViewBody');
   if (!body.classList.contains('open')) {
     body.classList.add('open');
     document.getElementById('calViewChevron').classList.add('open');
   }
+
+  // Defer render one tick so the browser applies the display change first
+  setTimeout(() => {
+    fcCalendar.render();
+    document.getElementById('fc-status').textContent = `${fcEvents.length} booking${fcEvents.length !== 1 ? 's' : ''} loaded`;
+  }, 0);
 }
 
 function toggleCalView() {
