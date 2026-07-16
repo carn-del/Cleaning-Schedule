@@ -88,7 +88,34 @@ body {
 .btn-icon:active { transform: scale(.92); }
 
 /* ── MAIN LAYOUT ── */
-.main { padding: 16px; max-width: 600px; margin: 0 auto; }
+.main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  align-items: start;
+}
+.col-left { min-width: 0; }
+.col-right {
+  position: sticky;
+  top: 82px;
+  max-height: calc(100vh - 98px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* On desktop the checklist is always open in the sidebar */
+@media (min-width: 900px) {
+  .col-right #clBody  { display: block !important; }
+  .col-right #clChevron { display: none; }
+}
+
+/* On mobile, collapse to single column */
+@media (max-width: 899px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .col-right { position: static; max-height: none; overflow-y: visible; }
+}
 
 /* ── CARDS ── */
 .card {
@@ -469,6 +496,8 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
 </header>
 
 <main class="main">
+<div class="dashboard-grid">
+<div class="col-left">
 
   <!-- ① ACCESS CODES -->
   <div class="card access-card">
@@ -554,7 +583,10 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
     </div>
   </div>
 
-  <!-- ④ MASTER CHECKLIST -->
+</div><!-- /col-left -->
+<div class="col-right">
+
+  <!-- MASTER CHECKLIST -->
   <div class="card" id="masterChecklist">
     <div class="cl-header" onclick="toggleChecklist()">
       <span style="font-size:15px;font-weight:700;">📋 Master Turnover Checklist</span>
@@ -577,6 +609,8 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
     </div>
   </div>
 
+</div><!-- /col-right -->
+</div><!-- /dashboard-grid -->
 </main>
 
 <footer class="app-footer">Last synced: <span id="lastSync">–</span></footer>
