@@ -739,6 +739,26 @@ function initFullCalendar(proxiedUrl) {
 
   fcCalendar.render();
 
+  // Add subtle checkout-day highlights using our already-parsed events.
+  // Background events sit behind foreground events so back-to-back bookings
+  // still render correctly — the new booking bar overlaps the light tint.
+  if (globalEvents.length) {
+    fcCalendar.addEventSource({
+      id: 'checkout-highlights',
+      events: globalEvents.map(ev => {
+        const nextDay = new Date(ev.dtend);
+        nextDay.setDate(nextDay.getDate() + 1);
+        return {
+          start: ev.dtend,
+          end: nextDay,
+          display: 'background',
+          color: 'rgba(255, 56, 92, 0.22)',
+          classNames: ['fc-checkout-hl']
+        };
+      })
+    });
+  }
+
   // Open the calendar view panel automatically on first load
   const body = document.getElementById('calViewBody');
   if (!body.classList.contains('open')) {
