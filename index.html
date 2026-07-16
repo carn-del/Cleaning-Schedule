@@ -418,21 +418,22 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
 }
 .fc-event:hover { background-color: var(--primary-dark) !important; }
 
-/* Checkout tail — FC event wrapper is transparent; visual is the inner stub div */
+/* Checkout tail — transparent wrapper with a 20% pseudo-element stub */
 .fc-event.fc-checkout-tail {
   background: transparent !important;
   box-shadow: none !important;
-  padding: 0 !important;
+  position: relative !important;
 }
-/* The actual visible 20% stub bar */
-.checkout-stub-bar {
+.fc-event.fc-checkout-tail::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
   width: 20%;
-  height: 100%;
-  min-height: 16px;
   background: var(--primary);
   border-radius: 0 5px 5px 0;
   opacity: 0.9;
 }
+.fc-event.fc-checkout-tail .fc-event-title { display: none; }
 /* Hide tail entries in list/agenda view */
 .fc-list-event.fc-checkout-tail { display: none !important; }
 [data-theme="dark"] .fc { color: var(--text); }
@@ -762,15 +763,7 @@ function initFullCalendar(proxiedUrl) {
     },
     firstDay: 1,
     height: 'auto',
-    events: [...fcEvents, ...checkoutTails],
-    eventContent: function(arg) {
-      // For checkout tails, render a custom inner stub instead of the default bar.
-      // The FC event wrapper is transparent (via CSS); the stub div provides the visual.
-      if (arg.event.classNames.includes('fc-checkout-tail')) {
-        return { html: '<div class="checkout-stub-bar"></div>' };
-      }
-      // All other events use FC's default rendering
-    }
+    events: [...fcEvents, ...checkoutTails]
   });
 
   fcCalendar.render();
