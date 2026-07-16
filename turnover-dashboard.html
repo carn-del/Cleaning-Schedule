@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🏠 Turnover Dashboard</title>
+<style>
+:root {
+  --bg: #f0f4f8;
+  --surface: #ffffff;
+  --surface2: #f7fafc;
+  --border: #e2e8f0;
+  --text: #1a202c;
+  --text-muted: #718096;
+  --text-xs: #a0aec0;
+  --primary: #ff385c;
+  --primary-dark: #d4294d;
+  --green: #38a169;
+  --green-dark: #276749;
+  --red: #e53e3e;
+  --orange: #dd6b20;
+  --yellow-bg: #fefce8;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --shadow: 0 4px 16px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,.12);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+[data-theme="dark"] {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #21262d;
+  --border: #30363d;
+  --text: #f0f6fc;
+  --text-muted: #8b949e;
+  --text-xs: #6e7681;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.4);
+  --shadow: 0 4px 16px rgba(0,0,0,.5);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,.6);
+  --yellow-bg: rgba(234,179,8,.08);
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  transition: background .25s, color .25s;
+}
+
+/* ── HEADER ── */
+.app-header {
+  background: linear-gradient(135deg, #ff385c 0%, #c2185b 100%);
+  color: #fff;
+  padding: 16px 18px env(safe-area-inset-top, 0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 2px 20px rgba(255,56,92,.35);
+}
+.app-header h1 { font-size: 19px; font-weight: 800; letter-spacing: -.3px; }
+.app-header p { font-size: 11px; opacity: .8; margin-top: 1px; }
+.btn-icon {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.2);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, transform .15s;
+  flex-shrink: 0;
+}
+.btn-icon:active { transform: scale(.92); }
+
+/* ── MAIN LAYOUT ── */
+.main { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.card-body { padding: 18px; }
+.card-title {
+  font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; gap: 7px;
+  margin-bottom: 14px;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 11px 18px;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  transition: all .2s; white-space: nowrap;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-full { width: 100%; }
+.btn-green { background: var(--green); color: #fff; }
+.btn-green:hover { background: var(--green-dark); }
+.btn-wa { background: #25d366; color: #fff; }
+.btn-wa:hover { background: #1da851; }
+.btn-ghost {
+  background: var(--surface2); color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { color: var(--primary); border-color: var(--primary); }
+.btn-sm { padding: 8px 13px; font-size: 13px; min-height: 36px; }
+
+/* ── ACCESS CODES ── */
+.access-card { border-left: 4px solid var(--primary); }
+.code-row {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 11px;
+}
+.code-row:last-child { margin-bottom: 0; }
+.code-row-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .6px;
+  color: var(--text-muted); margin-bottom: 8px;
+}
+.code-value {
+  font-size: 28px; font-weight: 900;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  letter-spacing: 6px;
+  color: var(--primary);
+  line-height: 1;
+}
+.code-value.static { color: var(--green); }
+.code-edit-row { display: flex; gap: 8px; margin-top: 10px; }
+.code-input {
+  flex: 1; padding: 10px 13px;
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+  font-size: 16px; font-family: monospace; font-weight: 700;
+  letter-spacing: 3px; outline: none;
+  transition: border-color .2s;
+}
+.code-input:focus { border-color: var(--primary); }
+.security-note {
+  font-size: 11px; color: var(--text-xs); margin-top: 7px; line-height: 1.4;
+}
+
+/* ── ICAL INPUT ── */
+.ical-input {
+  width: 100%; padding: 12px 14px;
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+  font-size: 14px; outline: none; margin-bottom: 10px;
+  transition: border-color .2s;
+}
+.ical-input:focus { border-color: var(--primary); }
+.ical-hint {
+  font-size: 12px; color: var(--text-muted); text-align: center;
+  margin-top: 9px;
+}
+
+/* ── TIMELINE ── */
+.timeline-empty {
+  text-align: center; padding: 44px 20px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+}
+.timeline-empty .em { font-size: 48px; margin-bottom: 12px; }
+.timeline-empty h3 { font-size: 16px; margin-bottom: 6px; }
+.timeline-empty p { font-size: 13px; color: var(--text-muted); }
+
+.month-label {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--text-muted);
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 0 8px;
+}
+.month-label::before,.month-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── BOOKING CARD ── */
+.bk-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow .2s;
+}
+.bk-card:hover { box-shadow: var(--shadow); }
+.bk-card.active-cleaning { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(255,56,92,.2); }
+
+.priority-banner {
+  background: linear-gradient(90deg, #fc4a1a, #f7b733);
+  color: #fff; padding: 9px 16px;
+  font-size: 13px; font-weight: 800;
+  display: flex; align-items: center; gap: 7px;
+  letter-spacing: .2px;
+  animation: flashWarning 2.5s ease-in-out infinite;
+}
+@keyframes flashWarning { 0%,100% { opacity:1 } 50% { opacity:.82 } }
+
+.bk-main {
+  padding: 15px 15px 13px;
+  display: flex; gap: 12px;
+  cursor: pointer; user-select: none;
+}
+.bk-left { flex: 1; min-width: 0; }
+.bk-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+}
+.badge-clean  { background: #fff0f3; color: #c41e3a; border: 1px solid #ffc0cb; }
+.badge-ci     { background: #f0fff4; color: #276749; border: 1px solid #9ae6b4; }
+.badge-urgent { background: #fff8e1; color: #b7791f; border: 1px solid #fde68a; }
+[data-theme="dark"] .badge-clean  { background: rgba(229,62,62,.15); border-color: rgba(229,62,62,.35); color: #fc8181; }
+[data-theme="dark"] .badge-ci     { background: rgba(56,161,105,.15); border-color: rgba(56,161,105,.35); color: #68d391; }
+[data-theme="dark"] .badge-urgent { background: rgba(237,137,54,.15); border-color: rgba(237,137,54,.35); color: #f6ad55; }
+
+.bk-date {
+  font-size: 22px; font-weight: 900; letter-spacing: -.5px;
+  line-height: 1.1; margin: 7px 0 5px;
+  display: flex; align-items: center; gap: 7px;
+}
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  display: inline-block;
+}
+.dot-red    { background: #e53e3e; box-shadow: 0 0 0 3px rgba(229,62,62,.25); }
+.dot-orange { background: #dd6b20; box-shadow: 0 0 0 3px rgba(221,107,32,.25); }
+.dot-green  { background: #38a169; box-shadow: 0 0 0 3px rgba(56,161,105,.25); }
+
+.bk-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+.days-chip {
+  display: inline-block; padding: 3px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; margin-top: 4px;
+}
+.chip-today  { background: #fff0f3; color: #c41e3a; }
+.chip-tmrw   { background: #fff8e1; color: #b7791f; }
+.chip-soon   { background: #fef3c7; color: #92400e; }
+.chip-future { background: #f0fff4; color: #276749; }
+.chip-past   { background: var(--surface2); color: var(--text-xs); }
+[data-theme="dark"] .chip-today  { background: rgba(229,62,62,.18); color: #fc8181; }
+[data-theme="dark"] .chip-tmrw   { background: rgba(237,137,54,.18); color: #f6ad55; }
+[data-theme="dark"] .chip-soon   { background: rgba(202,138,4,.18);  color: #fcd34d; }
+[data-theme="dark"] .chip-future { background: rgba(56,161,105,.18); color: #68d391; }
+
+.bk-dates-mini { font-size: 11px; color: var(--text-muted); text-align: right; line-height: 1.7; }
+
+.chevron-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 50%; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--text-muted);
+  transition: transform .3s, background .2s;
+  flex-shrink: 0;
+}
+.chevron-btn.open { transform: rotate(180deg); }
+
+.next-ci-row {
+  background: var(--yellow-bg);
+  border-top: 1px solid var(--border);
+  padding: 9px 15px;
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 600;
+}
+
+/* ── NOTES PANEL ── */
+.notes-panel {
+  border-top: 1px solid var(--border);
+  padding: 15px;
+  display: none;
+}
+.notes-panel.open { display: block; }
+.notes-lbl {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--text-muted); margin-bottom: 8px;
+}
+.notes-ta {
+  width: 100%; min-height: 90px;
+  padding: 11px 13px;
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+  font-size: 14px; line-height: 1.55; resize: vertical;
+  font-family: inherit; outline: none;
+  transition: border-color .2s;
+}
+.notes-ta:focus { border-color: var(--primary); }
+.notes-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.save-indicator {
+  font-size: 11px; color: var(--green); margin-top: 5px;
+  height: 16px; transition: opacity .3s;
+}
+
+/* ── CHECKLIST ── */
+.cl-header {
+  padding: 18px 18px;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; user-select: none;
+}
+.cl-body { padding: 0 18px 18px; display: none; }
+.cl-body.open { display: block; }
+.cl-group-title {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--text-muted);
+  margin: 14px 0 8px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.cl-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 0; border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.cl-item:last-child { border-bottom: none; }
+.cl-cb {
+  width: 22px; height: 22px; flex-shrink: 0;
+  accent-color: var(--primary); cursor: pointer;
+  border-radius: 5px;
+}
+.cl-lbl { font-size: 15px; flex: 1; cursor: pointer; transition: color .2s; }
+.cl-item input:checked + .cl-lbl { text-decoration: line-through; color: var(--text-xs); }
+.cl-reset-btn {
+  width: 100%; margin-top: 14px; padding: 11px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text-muted);
+  font-size: 14px; cursor: pointer; transition: all .2s; font-weight: 600;
+}
+.cl-reset-btn:hover { color: var(--primary); border-color: var(--primary); }
+.cl-progress {
+  font-size: 12px; color: var(--text-muted); margin-bottom: 4px;
+}
+progress {
+  width: 100%; height: 6px; border-radius: 3px;
+  border: none; background: var(--border);
+  margin-bottom: 14px;
+}
+progress::-webkit-progress-bar { background: var(--border); border-radius: 3px; }
+progress::-webkit-progress-value { background: var(--green); border-radius: 3px; }
+progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
+
+/* ── SPINNER / STATES ── */
+.loading-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 44px 20px; gap: 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  color: var(--text-muted);
+}
+.spinner {
+  width: 38px; height: 38px;
+  border: 3px solid var(--border); border-top-color: var(--primary);
+  border-radius: 50%; animation: spin .75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(90px);
+  background: #1a202c; color: #fff;
+  padding: 11px 22px; border-radius: 50px;
+  font-size: 14px; font-weight: 600;
+  z-index: 9999; white-space: nowrap;
+  box-shadow: var(--shadow-lg);
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none;
+}
+[data-theme="dark"] #toast { background: #e2e8f0; color: #1a202c; }
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── FOOTER ── */
+.app-footer {
+  text-align: center; padding: 20px;
+  font-size: 12px; color: var(--text-xs);
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div>
+    <h1>🏠 Turnover Dashboard</h1>
+    <p>Property Cleaner Guide</p>
+  </div>
+  <button class="btn-icon" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+</header>
+
+<main class="main">
+
+  <!-- ① ACCESS CODES -->
+  <div class="card access-card">
+    <div class="card-body">
+      <div class="card-title">🔑 Property Access Codes</div>
+
+      <!-- Gate Lockbox — editable, stored in localStorage -->
+      <div class="code-row">
+        <div class="code-row-label">🔐 Main Gate Lockbox Code</div>
+        <div class="code-value" id="gateDisplay">– – – –</div>
+        <div class="code-edit-row">
+          <input type="text" id="gateInput" class="code-input"
+            placeholder="Enter new code…" maxlength="10" inputmode="numeric"
+            onkeydown="if(event.key==='Enter') saveGateCode()">
+          <button class="btn btn-green btn-sm" onclick="saveGateCode()">💾 Save</button>
+        </div>
+        <p class="security-note">⚠️ Note: For security updates only. Use your physical keys for normal entry.</p>
+      </div>
+
+      <!-- Supply Closet — static, hardcoded -->
+      <div class="code-row">
+        <div class="code-row-label">🔒 Supply Closet Padlock (Static Code)</div>
+        <div class="code-value static">1234</div>
+        <p class="security-note">This code never changes. Memorise it — it's always 1234.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② ICAL LOADER -->
+  <div class="card">
+    <div class="card-body">
+      <div class="card-title">📅 Load Airbnb Calendar</div>
+      <input type="url" id="icalUrl" class="ical-input"
+        placeholder="Paste your Airbnb iCal (.ics) link here…"
+        onkeydown="if(event.key==='Enter') loadCalendar()">
+      <button class="btn btn-primary btn-full" onclick="loadCalendar()">
+        📥 Load Calendar
+      </button>
+      <p class="ical-hint">Airbnb app → Profile → Account → Tools → Export Calendar</p>
+    </div>
+  </div>
+
+  <!-- ③ TIMELINE (populated by JS) -->
+  <div id="timeline">
+    <div class="timeline-empty">
+      <div class="em">📆</div>
+      <h3>No bookings loaded</h3>
+      <p>Paste your Airbnb iCal link above<br>and tap "Load Calendar" to begin.</p>
+    </div>
+  </div>
+
+  <!-- ④ MASTER CHECKLIST -->
+  <div class="card" id="masterChecklist">
+    <div class="cl-header" onclick="toggleChecklist()">
+      <span style="font-size:15px;font-weight:700;">📋 Master Turnover Checklist</span>
+      <span class="chevron-btn" id="clChevron">▼</span>
+    </div>
+    <div class="cl-body" id="clBody">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">
+        Tap items to check off. Selecting a cleaning card auto-resets this list.
+      </p>
+      <div class="cl-progress" id="clProgress">0 / 27 completed</div>
+      <progress id="clBar" max="27" value="0"></progress>
+
+      <div class="cl-group-title">🧹 Cleaning Tasks</div>
+      <div id="clCleaningList"></div>
+
+      <div class="cl-group-title">🧴 Refill &amp; Restock Items</div>
+      <div id="clRefillList"></div>
+
+      <button class="cl-reset-btn" onclick="resetChecklist()">🔄 Reset All Checkboxes</button>
+    </div>
+  </div>
+
+</main>
+
+<footer class="app-footer">Last synced: <span id="lastSync">–</span></footer>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════
+(function initTheme() {
+  const t = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+})();
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const nxt = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', nxt);
+  localStorage.setItem('theme', nxt);
+  document.getElementById('themeBtn').textContent = nxt === 'dark' ? '☀️' : '🌙';
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ═══════════════════════════════════════
+// ACCESS CODES — localStorage
+// ═══════════════════════════════════════
+function initGateCode() {
+  const v = localStorage.getItem('gateCode');
+  if (v) {
+    document.getElementById('gateDisplay').textContent = v;
+    document.getElementById('gateInput').value = v;
+  }
+}
+
+function saveGateCode() {
+  const v = document.getElementById('gateInput').value.trim();
+  if (!v) { toast('⚠️ Please enter a code first'); return; }
+  localStorage.setItem('gateCode', v);
+  document.getElementById('gateDisplay').textContent = v;
+  toast('✅ Gate code saved!');
+}
+
+initGateCode();
+
+// ═══════════════════════════════════════
+// ICAL PARSING
+// ═══════════════════════════════════════
+function unfoldLines(raw) {
+  // RFC 5545: lines starting with SPACE or TAB are continuations
+  return raw.replace(/\r\n([ \t])/g, '$1').replace(/\r\n/g, '\n');
+}
+
+function parseIcalDate(val) {
+  // Handles "DTSTART;VALUE=DATE:20250115" or "DTSTART:20250115T140000Z"
+  const s = val.split(':').pop().replace(/[TZ]/g, '').slice(0, 8);
+  const y = +s.slice(0,4), m = +s.slice(4,6)-1, d = +s.slice(6,8);
+  return new Date(y, m, d);
+}
+
+function parseIcal(raw) {
+  const text = unfoldLines(raw);
+  const blocks = text.split('BEGIN:VEVENT').slice(1);
+  const events = [];
+
+  for (const block of blocks) {
+    const get = (prop) => {
+      const rx = new RegExp('^(' + prop + '[^:]*):(.+)$', 'm');
+      const m = block.match(rx);
+      return m ? m[2].trim() : null;
+    };
+
+    const summary = get('SUMMARY') || '';
+    // Skip Airbnb internal "Not available" blocks
+    if (/not available|unavailable|airbnb \(not/i.test(summary)) continue;
+
+    const dtStartRaw = get('DTSTART(?:;[^:]*)?');
+    const dtEndRaw   = get('DTEND(?:;[^:]*)?' );
+    if (!dtStartRaw || !dtEndRaw) continue;
+
+    const dtstart = parseIcalDate(dtStartRaw);
+    const dtend   = parseIcalDate(dtEndRaw);   // ← this IS the checkout / cleaning day
+    const uid     = get('UID') || String(Math.random());
+    const desc    = get('DESCRIPTION') || '';
+
+    events.push({ dtstart, dtend, summary, uid, desc });
+  }
+
+  return events.sort((a, b) => a.dtstart - b.dtstart);
+}
+
+// ═══════════════════════════════════════
+// CALENDAR LOADING
+// ═══════════════════════════════════════
+async function tryFetch(url) {
+  const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const t = await r.text();
+  if (!t.includes('BEGIN:VCALENDAR')) throw new Error('Not an iCal file');
+  return t;
+}
+
+async function loadCalendar() {
+  const raw = document.getElementById('icalUrl').value.trim();
+  if (!raw) { toast('⚠️ Paste your iCal URL first'); return; }
+
+  document.getElementById('timeline').innerHTML =
+    '<div class="loading-state"><div class="spinner"></div><p>Loading calendar…</p></div>';
+
+  let icalText = null;
+  const attempts = [
+    raw,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(raw)}`,
+    `https://corsproxy.io/?${encodeURIComponent(raw)}`
+  ];
+
+  for (const url of attempts) {
+    try {
+      icalText = await tryFetch(url);
+      break;
+    } catch (_) { /* try next proxy */ }
+  }
+
+  if (!icalText) {
+    document.getElementById('timeline').innerHTML = `
+      <div class="timeline-empty">
+        <div class="em">❌</div>
+        <h3>Could not load calendar</h3>
+        <p>Check that your URL is a valid Airbnb iCal link and starts with https://</p>
+      </div>`;
+    return;
+  }
+
+  localStorage.setItem('icalUrl', raw);
+  localStorage.setItem('icalCache', icalText);
+  localStorage.setItem('icalSynced', new Date().toLocaleString());
+  document.getElementById('lastSync').textContent = localStorage.getItem('icalSynced');
+
+  const events = parseIcal(icalText);
+  renderTimeline(events);
+  toast(`✅ Loaded ${events.length} booking${events.length !== 1 ? 's' : ''}`);
+}
+
+// ═══════════════════════════════════════
+// DATE HELPERS
+// ═══════════════════════════════════════
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_FULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS_SHORT   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function ymd(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function fmtDate(d) {
+  return `${DAYS_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+}
+
+function fmtDateLong(d) {
+  return `${DAYS_SHORT[d.getDay()]}, ${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function daysDiff(d) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(d); target.setHours(0,0,0,0);
+  return Math.round((target - today) / 86400000);
+}
+
+function dayChip(diff) {
+  if (diff < 0) return `<span class="days-chip chip-past">${Math.abs(diff)}d ago</span>`;
+  if (diff === 0) return `<span class="days-chip chip-today">TODAY</span>`;
+  if (diff === 1) return `<span class="days-chip chip-tmrw">TOMORROW</span>`;
+  if (diff <= 7)  return `<span class="days-chip chip-soon">In ${diff} days</span>`;
+  return `<span class="days-chip chip-future">In ${diff} days</span>`;
+}
+
+function statusDotClass(diff) {
+  if (diff <= 0) return 'dot-red';
+  if (diff <= 2) return 'dot-orange';
+  return 'dot-green';
+}
+
+function nightsCount(start, end) {
+  return Math.round((end - start) / 86400000);
+}
+
+// ═══════════════════════════════════════
+// TIMELINE RENDER
+// ═══════════════════════════════════════
+let globalEvents = [];
+
+function renderTimeline(events) {
+  globalEvents = events;
+  const tl = document.getElementById('timeline');
+  if (!events.length) {
+    tl.innerHTML = `<div class="timeline-empty">
+      <div class="em">📭</div><h3>No bookings found</h3>
+      <p>Your calendar loaded but has no upcoming reservations.</p>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  let lastMonthKey = null;
+
+  events.forEach((ev, i) => {
+    const checkoutDay   = ev.dtend;    // ← actual cleaning day
+    const checkinDay    = ev.dtstart;
+    const nights        = nightsCount(checkinDay, checkoutDay);
+    const nextEv        = events[i + 1] || null;
+    const sameDayTurnover = nextEv && ymd(checkoutDay) === ymd(nextEv.dtstart);
+    const diff          = daysDiff(checkoutDay);
+    const uid           = ev.uid;
+    const savedNote     = localStorage.getItem(`note:${uid}`) || '';
+    const cardId        = `bkcard_${i}`;
+    const notesId       = `notes_${i}`;
+    const chevId        = `chev_${i}`;
+
+    // Month header
+    const mk = `${checkoutDay.getFullYear()}_${checkoutDay.getMonth()}`;
+    if (mk !== lastMonthKey) {
+      html += `<div class="month-label">${MONTHS_FULL[checkoutDay.getMonth()]} ${checkoutDay.getFullYear()}</div>`;
+      lastMonthKey = mk;
+    }
+
+    html += `
+    <div class="bk-card" id="${cardId}" data-index="${i}" data-uid="${escHtml(uid)}">
+      ${sameDayTurnover ? `<div class="priority-banner">⚠️ SAME-DAY TURNOVER — PRIORITY CLEAN</div>` : ''}
+
+      <div class="bk-main" onclick="activateCleaning(${i})">
+        <div class="bk-left">
+          <div>
+            <span class="badge ${sameDayTurnover ? 'badge-urgent' : 'badge-clean'}">🧹 CLEANING REQUIRED</span>
+          </div>
+          <div class="bk-date">
+            <span class="status-dot ${statusDotClass(diff)}"></span>
+            ${fmtDate(checkoutDay)}
+          </div>
+          <div class="bk-meta">Check-out day · ${nights} night${nights !== 1 ? 's' : ''} stay</div>
+          ${dayChip(diff)}
+        </div>
+        <div class="bk-right">
+          <div class="bk-dates-mini">
+            ✈️ In: ${fmtDate(checkinDay)}<br>
+            🔑 Out: ${fmtDate(checkoutDay)}
+          </div>
+          <div class="chevron-btn" id="${chevId}">▼</div>
+        </div>
+      </div>
+
+      ${sameDayTurnover && nextEv ? `
+      <div class="next-ci-row">
+        <span class="badge badge-ci">✅ NEXT CHECK-IN</span>
+        <span style="font-size:12px;color:var(--text-muted)">New guest arrives same day: <strong>${fmtDate(nextEv.dtstart)}</strong></span>
+      </div>` : ''}
+
+      <div class="notes-panel" id="${notesId}">
+        <div class="notes-lbl">📝 Host Notes for This Cleaning</div>
+        <textarea class="notes-ta" id="ta_${i}"
+          data-uid="${escHtml(uid)}"
+          placeholder="e.g. Sofa bed in use – bring extra linens. Check the balcony door seal…"
+          oninput="autoSaveNote(this)"
+        >${escHtml(savedNote)}</textarea>
+        <div class="save-indicator" id="si_${i}"></div>
+        <div class="notes-actions">
+          <button class="btn btn-green btn-sm" onclick="saveNote(${i})">💾 Save Note</button>
+          <button class="btn btn-wa btn-sm" onclick="shareWhatsApp(${i})">📱 Send via WhatsApp</button>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  tl.innerHTML = html;
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+// ═══════════════════════════════════════
+// ACTIVATE CLEANING — expand notes + reset checklist
+// ═══════════════════════════════════════
+let activeCleaning = null;
+
+function activateCleaning(i) {
+  const notesEl = document.getElementById(`notes_${i}`);
+  const chevEl  = document.getElementById(`chev_${i}`);
+  const cardEl  = document.getElementById(`bkcard_${i}`);
+
+  // Toggle notes panel
+  const isOpen = notesEl.classList.contains('open');
+  notesEl.classList.toggle('open');
+  chevEl.classList.toggle('open');
+
+  if (!isOpen && activeCleaning !== i) {
+    // New cleaning selected — mark active and reset checklist
+    document.querySelectorAll('.bk-card').forEach(c => c.classList.remove('active-cleaning'));
+    cardEl.classList.add('active-cleaning');
+    activeCleaning = i;
+    resetChecklist(true);  // silent reset
+    toast('📋 Checklist reset for this cleaning session');
+  }
+}
+
+// ═══════════════════════════════════════
+// HOST NOTES — localStorage auto-save
+// ═══════════════════════════════════════
+const autoSaveTimers = {};
+
+function autoSaveNote(ta) {
+  const i = ta.id.replace('ta_','');
+  clearTimeout(autoSaveTimers[i]);
+  autoSaveTimers[i] = setTimeout(() => {
+    localStorage.setItem(`note:${ta.dataset.uid}`, ta.value);
+    const si = document.getElementById(`si_${i}`);
+    if (si) { si.textContent = '✓ Auto-saved'; setTimeout(() => si.textContent = '', 2000); }
+  }, 700);
+}
+
+function saveNote(i) {
+  const ta = document.getElementById(`ta_${i}`);
+  localStorage.setItem(`note:${ta.dataset.uid}`, ta.value);
+  toast('✅ Note saved!');
+}
+
+function shareWhatsApp(i) {
+  const ta    = document.getElementById(`ta_${i}`);
+  const card  = document.getElementById(`bkcard_${i}`);
+  const ev    = globalEvents[i];
+  const note  = ta.value.trim();
+
+  const dateLong = fmtDateLong(ev.dtend);
+  const nights   = nightsCount(ev.dtstart, ev.dtend);
+  const nextEv   = globalEvents[i + 1] || null;
+  const isSameDay = nextEv && ymd(ev.dtend) === ymd(nextEv.dtstart);
+
+  let msg = `🏠 *CLEANING REQUIRED*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `📅 *Date: ${dateLong}*\n`;
+  msg += `🛏 Check-in: ${fmtDate(ev.dtstart)} | Check-out: ${fmtDate(ev.dtend)}\n`;
+  msg += `🌙 ${nights} night${nights !== 1 ? 's' : ''} stay\n`;
+  if (isSameDay) {
+    msg += `\n⚠️ *SAME-DAY TURNOVER — PRIORITY CLEAN*\n`;
+    msg += `Next guest arrives: ${fmtDate(nextEv.dtstart)}\n`;
+  }
+  if (note) {
+    msg += `\n📝 *Host Notes:*\n${note}\n`;
+  }
+  msg += `\n✅ Please confirm when complete.`;
+
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ═══════════════════════════════════════
+// MASTER CHECKLIST
+// ═══════════════════════════════════════
+const CLEANING_TASKS = [
+  'Strip all bed linens and pillowcases',
+  'Launder linens on hot cycle',
+  'Make beds with fresh clean linens',
+  'Vacuum all floors, carpets & rugs',
+  'Mop hard floors',
+  'Sanitise toilet, sink & shower/bath',
+  'Wipe bathroom mirrors & fixtures',
+  'Wipe kitchen counters & splashback',
+  'Clean stovetop, oven & microwave inside',
+  'Clean refrigerator (remove old food)',
+  'Wash dishes / run & empty dishwasher',
+  'Empty all rubbish bins & replace liners',
+  'Dust furniture, shelves & surfaces',
+  'Wipe light switches & door handles',
+  'Check under beds & sofas for lost items',
+  'Air out the property (open windows)',
+  'Final walkthrough — all rooms ✔',
+];
+
+const REFILL_ITEMS = [
+  'Toilet paper (min. 4 rolls per bathroom)',
+  'Paper towels / kitchen roll',
+  'Hand soap — all bathrooms & kitchen',
+  'Dish soap & sponge',
+  'Coffee pods / ground coffee',
+  'Tea bags & sugar sachets',
+  'Condiments: oil, salt & pepper',
+  'Shower gel / shampoo / conditioner',
+  'Fresh bin liners in all bins',
+  'Check & replace TV remote batteries',
+  'Inspect for burned-out light bulbs',
+];
+
+const ALL_TASKS = [...CLEANING_TASKS, ...REFILL_ITEMS];
+const CL_PREFIX = 'cl:';
+
+function buildChecklist() {
+  const cl = document.getElementById('clCleaningList');
+  const rl = document.getElementById('clRefillList');
+
+  CLEANING_TASKS.forEach((task, i) => {
+    cl.appendChild(makeCheckItem(task, `ct_${i}`));
+  });
+  REFILL_ITEMS.forEach((item, i) => {
+    rl.appendChild(makeCheckItem(item, `ri_${i}`));
+  });
+
+  document.getElementById('clBar').max = ALL_TASKS.length;
+  updateClProgress();
+}
+
+function makeCheckItem(label, id) {
+  const div = document.createElement('div');
+  div.className = 'cl-item';
+  div.onclick = () => toggleCheckItem(id);
+
+  const cb = document.createElement('input');
+  cb.type = 'checkbox'; cb.className = 'cl-cb'; cb.id = id;
+  cb.checked = localStorage.getItem(CL_PREFIX + id) === '1';
+  cb.onclick = (e) => {
+    e.stopPropagation();
+    localStorage.setItem(CL_PREFIX + id, cb.checked ? '1' : '0');
+    updateClProgress();
+  };
+
+  const lbl = document.createElement('label');
+  lbl.className = 'cl-lbl'; lbl.htmlFor = id; lbl.textContent = label;
+
+  div.appendChild(cb); div.appendChild(lbl);
+  return div;
+}
+
+function toggleCheckItem(id) {
+  const cb = document.getElementById(id);
+  cb.checked = !cb.checked;
+  localStorage.setItem(CL_PREFIX + id, cb.checked ? '1' : '0');
+  updateClProgress();
+}
+
+function updateClProgress() {
+  let done = 0;
+  CLEANING_TASKS.forEach((_,i) => { if (localStorage.getItem(`${CL_PREFIX}ct_${i}`) === '1') done++; });
+  REFILL_ITEMS.forEach((_,i)   => { if (localStorage.getItem(`${CL_PREFIX}ri_${i}`) === '1') done++; });
+  const total = ALL_TASKS.length;
+  document.getElementById('clProgress').textContent = `${done} / ${total} completed`;
+  document.getElementById('clBar').value = done;
+}
+
+function resetChecklist(silent = false) {
+  CLEANING_TASKS.forEach((_,i) => {
+    const cb = document.getElementById(`ct_${i}`);
+    if (cb) { cb.checked = false; localStorage.removeItem(`${CL_PREFIX}ct_${i}`); }
+  });
+  REFILL_ITEMS.forEach((_,i) => {
+    const cb = document.getElementById(`ri_${i}`);
+    if (cb) { cb.checked = false; localStorage.removeItem(`${CL_PREFIX}ri_${i}`); }
+  });
+  updateClProgress();
+  if (!silent) toast('🔄 Checklist reset!');
+}
+
+function toggleChecklist() {
+  const body  = document.getElementById('clBody');
+  const chev  = document.getElementById('clChevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+buildChecklist();
+
+// ═══════════════════════════════════════
+// RESTORE CACHED STATE ON LOAD
+// ═══════════════════════════════════════
+(function restoreCache() {
+  const url   = localStorage.getItem('icalUrl');
+  const cache = localStorage.getItem('icalCache');
+  const synced = localStorage.getItem('icalSynced');
+  if (url) document.getElementById('icalUrl').value = url;
+  if (synced) document.getElementById('lastSync').textContent = synced;
+  if (cache) {
+    try {
+      const events = parseIcal(cache);
+      renderTimeline(events);
+    } catch (_) { /* ignore stale cache parse errors */ }
+  }
+})();
+</script>
+</body>
+</html>
