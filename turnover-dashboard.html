@@ -1164,25 +1164,51 @@ function toggleChecklist() {
 buildChecklist();
 
 // ═══════════════════════════════════════
+// AUTO-LOAD FROM GITHUB ACTIONS calendar.ics
+// This file is written hourly by the GitHub Action — no CORS issues
+// ═══════════════════════════════════════
+async function tryLocalCalendar() {
+  try {
+    const r = await fetch('./calendar.ics', { cache: 'no-store' });
+    if (!r.ok) return false;
+    const text = await r.text();
+    if (!text.includes('BEGIN:VCALENDAR')) return false;
+    localStorage.setItem('icalCache', text);
+    localStorage.setItem('icalSynced', new Date().toLocaleString() + ' (auto-sync)');
+    document.getElementById('lastSync').textContent = localStorage.getItem('icalSynced');
+    localStorage.setItem('icalProxied', './calendar.ics');
+    const events = parseIcal(text);
+    renderTimeline(events);
+    setTimeout(() => initFullCalendar('./calendar.ics'), 200);
+    toast(`✅ Calendar auto-loaded — ${events.length} booking${events.length !== 1 ? 's' : ''}`);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════
 // RESTORE CACHED STATE ON LOAD
 // ═══════════════════════════════════════
-(function restoreCache() {
+(async function restoreCache() {
   const url      = localStorage.getItem('icalUrl');
   const cache    = localStorage.getItem('icalCache');
   const proxied  = localStorage.getItem('icalProxied');
   const synced   = localStorage.getItem('icalSynced');
   if (url) document.getElementById('icalUrl').value = url;
   if (synced) document.getElementById('lastSync').textContent = synced;
+
+  // 1. Try the GitHub Actions-generated local file first (best, no CORS)
+  const localLoaded = await tryLocalCalendar();
+  if (localLoaded) return;
+
+  // 2. Fall back to cached iCal text from last successful manual load
   if (cache) {
     try {
       const events = parseIcal(cache);
       renderTimeline(events);
-    } catch (_) { /* ignore stale cache parse errors */ }
-  }
-  // Restore live FullCalendar widget with saved working proxy URL
-  if (proxied) {
-    // Slight delay so DOM is fully painted before FullCalendar sizes itself
-    setTimeout(() => initFullCalendar(proxied), 200);
+      if (proxied) setTimeout(() => initFullCalendar(proxied), 200);
+    } catch (_) { /* ignore stale cache */ }
   }
 })();
 </script>

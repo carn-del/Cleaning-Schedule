@@ -1,0 +1,28 @@
+name: Sync Airbnb Calendar
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # Runs every hour automatically
+  workflow_dispatch:        # Allows you to trigger manually from GitHub
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch Airbnb iCal feed
+        run: |
+          curl -L "${{ secrets.AIRBNB_ICAL_URL }}" -o calendar.ics
+          echo "Fetched $(wc -l < calendar.ics) lines from Airbnb"
+
+      - name: Commit calendar if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add calendar.ics
+          git diff --staged --quiet && echo "No changes" || (git commit -m "sync: update calendar $(date -u '+%Y-%m-%d %H:%M UTC')" && git push)
