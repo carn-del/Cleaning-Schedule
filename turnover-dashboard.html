@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>🏠 Turnover Dashboard</title>
+
+<!-- ical.js required by FullCalendar iCalendar plugin -->
+<script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
+<!-- FullCalendar core + daygrid + list plugins -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<!-- FullCalendar iCalendar plugin (parses .ics feeds) -->
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/icalendar@6.1.11/index.global.min.js"></script>
+
 <style>
 :root {
   --bg: #f0f4f8;
@@ -388,6 +396,54 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
 [data-theme="dark"] #toast { background: #e2e8f0; color: #1a202c; }
 #toast.show { transform: translateX(-50%) translateY(0); }
 
+/* ── FULLCALENDAR THEME OVERRIDES ── */
+.fc { font-family: inherit; font-size: 13px; }
+.fc-toolbar-title { font-size: 16px !important; font-weight: 700; }
+.fc-button-primary {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  font-size: 13px !important;
+}
+.fc-button-primary:not(:disabled):active,
+.fc-button-primary:not(:disabled).fc-button-active {
+  background: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+}
+.fc-event {
+  background-color: var(--primary) !important;
+  border: none !important;
+  font-weight: 600;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.fc-event:hover { background-color: var(--primary-dark) !important; }
+[data-theme="dark"] .fc { color: var(--text); }
+[data-theme="dark"] .fc-theme-standard td,
+[data-theme="dark"] .fc-theme-standard th,
+[data-theme="dark"] .fc-theme-standard .fc-scrollgrid { border-color: var(--border); }
+[data-theme="dark"] .fc-col-header-cell-cushion,
+[data-theme="dark"] .fc-daygrid-day-number,
+[data-theme="dark"] .fc-list-event-title a { color: var(--text); }
+[data-theme="dark"] .fc-daygrid-day.fc-day-today { background: rgba(255,56,92,.1); }
+[data-theme="dark"] .fc-list-day-cushion,
+[data-theme="dark"] .fc-list-table .fc-list-day th { background: var(--surface2); }
+
+/* ── LOADER TABS ── */
+.loader-tabs {
+  display: flex; gap: 6px; margin-bottom: 14px;
+}
+.loader-tab {
+  flex: 1; padding: 9px 10px;
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface2); color: var(--text-muted);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all .2s;
+}
+.loader-tab.active {
+  border-color: var(--primary); color: var(--primary);
+  background: var(--surface);
+}
+
 /* ── FOOTER ── */
 .app-footer {
   text-align: center; padding: 20px;
@@ -439,17 +495,51 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
   <div class="card">
     <div class="card-body">
       <div class="card-title">📅 Load Airbnb Calendar</div>
-      <input type="url" id="icalUrl" class="ical-input"
-        placeholder="Paste your Airbnb iCal (.ics) link here…"
-        onkeydown="if(event.key==='Enter') loadCalendar()">
-      <button class="btn btn-primary btn-full" onclick="loadCalendar()">
-        📥 Load Calendar
-      </button>
-      <p class="ical-hint">Airbnb app → Profile → Account → Tools → Export Calendar</p>
+
+      <!-- Tabs -->
+      <div class="loader-tabs">
+        <button class="loader-tab active" id="tabUrl" onclick="switchTab('url')">🔗 Paste URL</button>
+        <button class="loader-tab" id="tabText" onclick="switchTab('text')">📋 Paste .ics Text</button>
+      </div>
+
+      <!-- Tab: URL -->
+      <div id="panelUrl">
+        <input type="url" id="icalUrl" class="ical-input"
+          placeholder="https://www.airbnb.com.au/calendar/ical/…"
+          onkeydown="if(event.key==='Enter') loadCalendar()">
+        <button class="btn btn-primary btn-full" onclick="loadCalendar()">
+          📥 Load Calendar
+        </button>
+        <p class="ical-hint">Copy the link from Airbnb → Calendar → Connect to another website → <strong>Step 1</strong></p>
+      </div>
+
+      <!-- Tab: Paste raw .ics text (fallback when URL is blocked) -->
+      <div id="panelText" style="display:none">
+        <textarea id="icalRawText" class="ical-input" rows="5"
+          style="resize:vertical;font-family:monospace;font-size:12px;"
+          placeholder="Open the iCal URL in Safari, select all (⌘A), copy (⌘C), then paste here…"></textarea>
+        <button class="btn btn-primary btn-full" onclick="loadCalendarFromText()">
+          📥 Load from Pasted Text
+        </button>
+        <p class="ical-hint">Use this if the URL method shows "Cannot load calendar".<br>
+          Open the iCal URL in a new tab → Select All → Copy → Paste above.</p>
+      </div>
     </div>
   </div>
 
-  <!-- ③ TIMELINE (populated by JS) -->
+  <!-- ③ FULLCALENDAR VIEW (collapsible) -->
+  <div class="card" id="calViewCard">
+    <div class="cl-header" onclick="toggleCalView()">
+      <span style="font-size:15px;font-weight:700;">📆 Calendar View</span>
+      <span class="chevron-btn" id="calViewChevron">▼</span>
+    </div>
+    <div class="cl-body" id="calViewBody" style="padding:0 12px 16px;">
+      <div id="fc-calendar"></div>
+      <p id="fc-status" style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:8px;"></p>
+    </div>
+  </div>
+
+  <!-- ④ TIMELINE (populated by JS) -->
   <div id="timeline">
     <div class="timeline-empty">
       <div class="em">📆</div>
@@ -588,6 +678,89 @@ function parseIcal(raw) {
 // ═══════════════════════════════════════
 // CALENDAR LOADING
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// LOADER TABS
+// ═══════════════════════════════════════
+function switchTab(tab) {
+  document.getElementById('panelUrl').style.display  = tab === 'url'  ? '' : 'none';
+  document.getElementById('panelText').style.display = tab === 'text' ? '' : 'none';
+  document.getElementById('tabUrl').classList.toggle('active',  tab === 'url');
+  document.getElementById('tabText').classList.toggle('active', tab === 'text');
+}
+
+// ═══════════════════════════════════════
+// CORS PROXY LIST (tried in order)
+// ═══════════════════════════════════════
+function proxiedUrls(raw) {
+  const enc = encodeURIComponent(raw);
+  return [
+    `https://api.allorigins.win/raw?url=${enc}`,   // primary — used by FullCalendar too
+    `https://corsproxy.io/?${enc}`,
+    `https://thingproxy.freeboard.io/fetch/${raw}`,
+    `https://api.codetabs.com/v1/proxy?quest=${enc}`,
+    raw  // last resort direct (works on some hosts)
+  ];
+}
+
+// ═══════════════════════════════════════
+// FULLCALENDAR — live calendar view
+// ═══════════════════════════════════════
+let fcCalendar = null;
+
+function initFullCalendar(proxiedUrl) {
+  const el = document.getElementById('fc-calendar');
+  if (!el) return;
+
+  // Destroy existing instance before re-init
+  if (fcCalendar) { fcCalendar.destroy(); fcCalendar = null; }
+
+  fcCalendar = new FullCalendar.Calendar(el, {
+    initialView: window.innerWidth < 600 ? 'listMonth' : 'dayGridMonth',
+    headerToolbar: {
+      left: 'prev,next',
+      center: 'title',
+      right: 'dayGridMonth,listMonth'
+    },
+    firstDay: 1,
+    height: 'auto',
+    events: {
+      url: proxiedUrl,
+      format: 'ics'
+    },
+    eventSourceSuccess: function(rawEvents) {
+      document.getElementById('fc-status').textContent =
+        `Live feed: ${rawEvents.length} event(s) loaded`;
+    },
+    eventSourceFailure: function() {
+      document.getElementById('fc-status').textContent =
+        '⚠️ Live calendar widget failed — cleaning timeline below still works.';
+    }
+  });
+
+  fcCalendar.render();
+
+  // Open the calendar view panel automatically on first load
+  const body = document.getElementById('calViewBody');
+  if (!body.classList.contains('open')) {
+    body.classList.add('open');
+    document.getElementById('calViewChevron').classList.add('open');
+  }
+}
+
+function toggleCalView() {
+  const body = document.getElementById('calViewBody');
+  const chev = document.getElementById('calViewChevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+  // Render FullCalendar after reveal so it sizes correctly
+  if (body.classList.contains('open') && fcCalendar) {
+    setTimeout(() => fcCalendar.updateSize(), 50);
+  }
+}
+
+// ═══════════════════════════════════════
+// FETCH ICAL TEXT (with proxy fallbacks)
+// ═══════════════════════════════════════
 async function tryFetch(url) {
   const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
   if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -596,45 +769,71 @@ async function tryFetch(url) {
   return t;
 }
 
+function finishLoad(icalText, sourceUrl, proxiedUrl) {
+  if (sourceUrl) localStorage.setItem('icalUrl', sourceUrl);
+  localStorage.setItem('icalCache', icalText);
+  localStorage.setItem('icalProxied', proxiedUrl || '');
+  localStorage.setItem('icalSynced', new Date().toLocaleString());
+  document.getElementById('lastSync').textContent = localStorage.getItem('icalSynced');
+  const events = parseIcal(icalText);
+  renderTimeline(events);
+  // Also wire up the live FullCalendar widget with the working proxy URL
+  if (proxiedUrl) initFullCalendar(proxiedUrl);
+  toast(`✅ Loaded ${events.length} booking${events.length !== 1 ? 's' : ''}`);
+}
+
 async function loadCalendar() {
   const raw = document.getElementById('icalUrl').value.trim();
   if (!raw) { toast('⚠️ Paste your iCal URL first'); return; }
 
   document.getElementById('timeline').innerHTML =
-    '<div class="loading-state"><div class="spinner"></div><p>Loading calendar…</p></div>';
+    '<div class="loading-state"><div class="spinner"></div><p>Trying to load calendar…</p></div>';
 
+  const urls = proxiedUrls(raw);
   let icalText = null;
-  const attempts = [
-    raw,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(raw)}`,
-    `https://corsproxy.io/?${encodeURIComponent(raw)}`
-  ];
+  let workingProxy = null;
 
-  for (const url of attempts) {
+  for (const url of urls) {
     try {
       icalText = await tryFetch(url);
+      workingProxy = url;
       break;
-    } catch (_) { /* try next proxy */ }
+    } catch (_) { /* try next */ }
   }
 
   if (!icalText) {
     document.getElementById('timeline').innerHTML = `
       <div class="timeline-empty">
         <div class="em">❌</div>
-        <h3>Could not load calendar</h3>
-        <p>Check that your URL is a valid Airbnb iCal link and starts with https://</p>
+        <h3>Could not load via URL</h3>
+        <p style="margin-bottom:12px;">All proxies were blocked.<br>
+        Use the <strong>"Paste .ics Text"</strong> tab instead:</p>
+        <ol style="text-align:left;font-size:13px;color:var(--text-muted);line-height:1.9;padding-left:20px;">
+          <li>Copy your iCal URL</li>
+          <li>Open it in a <strong>new browser tab</strong></li>
+          <li>Select All (⌘A) and Copy (⌘C)</li>
+          <li>Come back here → tap <strong>"Paste .ics Text"</strong> tab → paste</li>
+        </ol>
+        <button class="btn btn-primary" style="margin-top:14px" onclick="switchTab('text')">
+          Switch to Paste Text →
+        </button>
       </div>`;
     return;
   }
 
-  localStorage.setItem('icalUrl', raw);
-  localStorage.setItem('icalCache', icalText);
-  localStorage.setItem('icalSynced', new Date().toLocaleString());
-  document.getElementById('lastSync').textContent = localStorage.getItem('icalSynced');
+  finishLoad(icalText, raw, workingProxy);
+}
 
-  const events = parseIcal(icalText);
-  renderTimeline(events);
-  toast(`✅ Loaded ${events.length} booking${events.length !== 1 ? 's' : ''}`);
+function loadCalendarFromText() {
+  const raw = document.getElementById('icalRawText').value.trim();
+  if (!raw) { toast('⚠️ Paste your .ics text first'); return; }
+  if (!raw.includes('BEGIN:VCALENDAR')) {
+    toast('⚠️ This doesn\'t look like iCal data — make sure you copied the full page');
+    return;
+  }
+  document.getElementById('timeline').innerHTML =
+    '<div class="loading-state"><div class="spinner"></div><p>Parsing calendar…</p></div>';
+  finishLoad(raw, null, null);
 }
 
 // ═══════════════════════════════════════
@@ -968,9 +1167,10 @@ buildChecklist();
 // RESTORE CACHED STATE ON LOAD
 // ═══════════════════════════════════════
 (function restoreCache() {
-  const url   = localStorage.getItem('icalUrl');
-  const cache = localStorage.getItem('icalCache');
-  const synced = localStorage.getItem('icalSynced');
+  const url      = localStorage.getItem('icalUrl');
+  const cache    = localStorage.getItem('icalCache');
+  const proxied  = localStorage.getItem('icalProxied');
+  const synced   = localStorage.getItem('icalSynced');
   if (url) document.getElementById('icalUrl').value = url;
   if (synced) document.getElementById('lastSync').textContent = synced;
   if (cache) {
@@ -978,6 +1178,11 @@ buildChecklist();
       const events = parseIcal(cache);
       renderTimeline(events);
     } catch (_) { /* ignore stale cache parse errors */ }
+  }
+  // Restore live FullCalendar widget with saved working proxy URL
+  if (proxied) {
+    // Slight delay so DOM is fully painted before FullCalendar sizes itself
+    setTimeout(() => initFullCalendar(proxied), 200);
   }
 })();
 </script>
