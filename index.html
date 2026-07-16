@@ -418,13 +418,6 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
 }
 .fc-event:hover { background-color: var(--primary-dark) !important; }
 
-/* Checkout tail wrapper — transparent so only the stub div inside is visible */
-.fc-event.checkout-tail {
-  background: transparent !important;
-  box-shadow: none !important;
-}
-/* Hide tail entries in list/agenda view */
-.fc-list-event.checkout-tail { display: none !important; }
 [data-theme="dark"] .fc { color: var(--text); }
 [data-theme="dark"] .fc-theme-standard td,
 [data-theme="dark"] .fc-theme-standard th,
@@ -722,24 +715,18 @@ function initFullCalendar(proxiedUrl) {
   // Destroy existing instance before re-init
   if (fcCalendar) { fcCalendar.destroy(); fcCalendar = null; }
 
-  // Main booking bars — end at DTEND (exclusive), so bar covers booked nights only
-  const fcEvents = globalEvents.map(ev => ({
-    title: ev.summary || 'Reserved',
-    start: ymd(ev.dtstart),
-    end: ymd(ev.dtend),
-    allDay: true
-  }));
-
-  // Checkout tail — a 1/5-width stub on the checkout day itself
-  const checkoutTails = globalEvents.map(ev => {
-    const nextDay = new Date(ev.dtend);
-    nextDay.setDate(nextDay.getDate() + 1);
+  // Extend every event end by 1 day so the bar runs into the checkout day.
+  // FullCalendar then naturally renders the cross-week break with a flat right
+  // edge on the last booked night and a flat left edge on the checkout day —
+  // giving the visual of one continuous bar across the row break.
+  const fcEvents = globalEvents.map(ev => {
+    const extEnd = new Date(ev.dtend);
+    extEnd.setDate(extEnd.getDate() + 1);
     return {
-      title: '',
-      start: ymd(ev.dtend),
-      end: ymd(nextDay),
-      allDay: true,
-      classNames: ['checkout-tail']
+      title: ev.summary || 'Reserved',
+      start: ymd(ev.dtstart),
+      end: ymd(extEnd),
+      allDay: true
     };
   });
 
@@ -752,18 +739,19 @@ function initFullCalendar(proxiedUrl) {
     },
     firstDay: 1,
     height: 'auto',
-    events: [...fcEvents, ...checkoutTails],
-    eventContent: function(arg) {
-      if (arg.event.classNames.includes('checkout-tail')) {
-        // Fixed pixel height avoids height:100% failing inside FC's flex container
-        return { html: '<div style="width:20%;height:20px;background:#ff385c;border-radius:0 5px 5px 0;opacity:0.9;display:block;"></div>' };
-      }
-      return { html: '<div class="fc-event-main"><div class="fc-event-title fc-sticky">' + (arg.event.title || '') + '</div></div>' };
-    },
+    events: fcEvents,
     eventDidMount: function(info) {
-      if (info.event.classNames.includes('checkout-tail')) {
-        info.el.style.background = 'transparent';
-        info.el.style.boxShadow = 'none';
+      const isEnd   = info.el.classList.contains('fc-event-end');
+      const isStart = info.el.classList.contains('fc-event-start');
+      // Cross-row last segment = checkout day. Shrink harness to 20% of its width.
+      // Same-row events (both start+end on same segment) keep full width.
+      if (isEnd && !isStart) {
+        setTimeout(function() {
+          const harness = info.el.closest('.fc-daygrid-event-harness');
+          if (harness && harness.offsetWidth > 0) {
+            harness.style.width = (harness.offsetWidth * 0.2) + 'px';
+          }
+        }, 0);
       }
     }
   });
