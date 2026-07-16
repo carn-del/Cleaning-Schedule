@@ -902,6 +902,7 @@ function nightsCount(start, end) {
 // TIMELINE RENDER
 // ═══════════════════════════════════════
 let globalEvents = [];
+let globalTasks  = [];  // flat sorted: {type:'checkin'|'checkout', evIndex, date}
 
 function renderTimeline(events) {
   globalEvents = events;
@@ -914,43 +915,65 @@ function renderTimeline(events) {
     return;
   }
 
+  // Two cleaning tasks per booking: pre-arrival (check-in day) + post-departure (check-out day)
+  const rawTasks = [];
+  events.forEach((ev, evIndex) => {
+    rawTasks.push({ type: 'checkin',  evIndex, date: ev.dtstart });
+    rawTasks.push({ type: 'checkout', evIndex, date: ev.dtend   });
+  });
+  rawTasks.sort((a, b) => a.date - b.date);
+  globalTasks = rawTasks;
+
   let html = '';
   let lastMonthKey = null;
 
-  events.forEach((ev, i) => {
-    const checkoutDay   = ev.dtend;    // ← actual cleaning day
-    const checkinDay    = ev.dtstart;
-    const nights        = nightsCount(checkinDay, checkoutDay);
-    const nextEv        = events[i + 1] || null;
-    const sameDayTurnover = nextEv && ymd(checkoutDay) === ymd(nextEv.dtstart);
-    const diff          = daysDiff(checkoutDay);
-    const uid           = ev.uid;
-    const savedNote     = localStorage.getItem(`note:${uid}`) || '';
-    const cardId        = `bkcard_${i}`;
-    const notesId       = `notes_${i}`;
-    const chevId        = `chev_${i}`;
+  rawTasks.forEach((task, ti) => {
+    const { type, evIndex, date } = task;
+    const ev           = events[evIndex];
+    const checkinDay   = ev.dtstart;
+    const checkoutDay  = ev.dtend;
+    const nights       = nightsCount(checkinDay, checkoutDay);
+    const nextEv       = events[evIndex + 1] || null;
+    const sameDayTurnover = type === 'checkout' && nextEv && ymd(checkoutDay) === ymd(nextEv.dtstart);
+    const diff         = daysDiff(date);
+    const uid          = ev.uid;
+    const noteKey      = type === 'checkin' ? `note_checkin:${uid}` : `note_checkout:${uid}`;
+    const savedNote    = localStorage.getItem(noteKey) || (type === 'checkout' ? localStorage.getItem(`note:${uid}`) : '') || '';
+    const cardId       = `bkcard_${ti}`;
+    const notesId      = `notes_${ti}`;
+    const chevId       = `chev_${ti}`;
 
-    // Month header
-    const mk = `${checkoutDay.getFullYear()}_${checkoutDay.getMonth()}`;
+    // Month header keyed on this task's date
+    const mk = `${date.getFullYear()}_${date.getMonth()}`;
     if (mk !== lastMonthKey) {
-      html += `<div class="month-label">${MONTHS_FULL[checkoutDay.getMonth()]} ${checkoutDay.getFullYear()}</div>`;
+      html += `<div class="month-label">${MONTHS_FULL[date.getMonth()]} ${date.getFullYear()}</div>`;
       lastMonthKey = mk;
     }
 
+    const isCheckin  = type === 'checkin';
+    const badge      = isCheckin
+      ? `<span class="badge badge-ci">🛏 PRE-ARRIVAL CLEAN</span>`
+      : `<span class="badge ${sameDayTurnover ? 'badge-urgent' : 'badge-clean'}">🧹 POST-DEPARTURE CLEAN</span>`;
+    const metaText   = isCheckin
+      ? `Check-in day · ${nights} night${nights !== 1 ? 's' : ''} stay`
+      : `Check-out day · ${nights} night${nights !== 1 ? 's' : ''} stay`;
+    const placeholder = isCheckin
+      ? `e.g. Fresh flowers in entryway. Check welcome pack is stocked…`
+      : `e.g. Sofa bed in use – bring extra linens. Check the balcony door seal…`;
+    const notesLabel = isCheckin ? '📝 Host Notes for This Check-in' : '📝 Host Notes for This Cleaning';
+
     html += `
-    <div class="bk-card" id="${cardId}" data-index="${i}" data-uid="${escHtml(uid)}">
+    <div class="bk-card" id="${cardId}" data-index="${ti}" data-uid="${escHtml(uid)}">
       ${sameDayTurnover ? `<div class="priority-banner">⚠️ SAME-DAY TURNOVER — PRIORITY CLEAN</div>` : ''}
 
-      <div class="bk-main" onclick="activateCleaning(${i})">
+      <div class="bk-main" onclick="activateCleaning(${ti})">
         <div class="bk-left">
-          <div>
-            <span class="badge ${sameDayTurnover ? 'badge-urgent' : 'badge-clean'}">🧹 CLEANING REQUIRED</span>
-          </div>
+          <div>${badge}</div>
           <div class="bk-date">
             <span class="status-dot ${statusDotClass(diff)}"></span>
-            ${fmtDate(checkoutDay)}
+            ${fmtDate(date)}
           </div>
-          <div class="bk-meta">Check-out day · ${nights} night${nights !== 1 ? 's' : ''} stay</div>
+          <div class="bk-meta">${metaText}</div>
           ${dayChip(diff)}
         </div>
         <div class="bk-right">
@@ -969,16 +992,17 @@ function renderTimeline(events) {
       </div>` : ''}
 
       <div class="notes-panel" id="${notesId}">
-        <div class="notes-lbl">📝 Host Notes for This Cleaning</div>
-        <textarea class="notes-ta" id="ta_${i}"
+        <div class="notes-lbl">${notesLabel}</div>
+        <textarea class="notes-ta" id="ta_${ti}"
           data-uid="${escHtml(uid)}"
-          placeholder="e.g. Sofa bed in use – bring extra linens. Check the balcony door seal…"
+          data-type="${type}"
+          placeholder="${placeholder}"
           oninput="autoSaveNote(this)"
         >${escHtml(savedNote)}</textarea>
-        <div class="save-indicator" id="si_${i}"></div>
+        <div class="save-indicator" id="si_${ti}"></div>
         <div class="notes-actions">
-          <button class="btn btn-green btn-sm" onclick="saveNote(${i})">💾 Save Note</button>
-          <button class="btn btn-wa btn-sm" onclick="shareWhatsApp(${i})">📱 Send via WhatsApp</button>
+          <button class="btn btn-green btn-sm" onclick="saveNote(${ti})">💾 Save Note</button>
+          <button class="btn btn-wa btn-sm" onclick="shareWhatsApp(${ti})">📱 Send via WhatsApp</button>
         </div>
       </div>
     </div>`;
@@ -1028,37 +1052,47 @@ function autoSaveNote(ta) {
   const i = ta.id.replace('ta_','');
   clearTimeout(autoSaveTimers[i]);
   autoSaveTimers[i] = setTimeout(() => {
-    localStorage.setItem(`note:${ta.dataset.uid}`, ta.value);
+    const key = `note_${ta.dataset.type}:${ta.dataset.uid}`;
+    localStorage.setItem(key, ta.value);
     const si = document.getElementById(`si_${i}`);
     if (si) { si.textContent = '✓ Auto-saved'; setTimeout(() => si.textContent = '', 2000); }
   }, 700);
 }
 
 function saveNote(i) {
-  const ta = document.getElementById(`ta_${i}`);
-  localStorage.setItem(`note:${ta.dataset.uid}`, ta.value);
+  const ta  = document.getElementById(`ta_${i}`);
+  const key = `note_${ta.dataset.type}:${ta.dataset.uid}`;
+  localStorage.setItem(key, ta.value);
   toast('✅ Note saved!');
 }
 
 function shareWhatsApp(i) {
-  const ta    = document.getElementById(`ta_${i}`);
-  const card  = document.getElementById(`bkcard_${i}`);
-  const ev    = globalEvents[i];
-  const note  = ta.value.trim();
+  const ta     = document.getElementById(`ta_${i}`);
+  const task   = globalTasks[i];
+  const ev     = globalEvents[task.evIndex];
+  const type   = task.type;
+  const note   = ta.value.trim();
+  const nights = nightsCount(ev.dtstart, ev.dtend);
+  const nextEv = globalEvents[task.evIndex + 1] || null;
+  const isSameDay = type === 'checkout' && nextEv && ymd(ev.dtend) === ymd(nextEv.dtstart);
 
-  const dateLong = fmtDateLong(ev.dtend);
-  const nights   = nightsCount(ev.dtstart, ev.dtend);
-  const nextEv   = globalEvents[i + 1] || null;
-  const isSameDay = nextEv && ymd(ev.dtend) === ymd(nextEv.dtstart);
-
-  let msg = `🏠 *CLEANING REQUIRED*\n`;
-  msg += `━━━━━━━━━━━━━━━━━━━━\n`;
-  msg += `📅 *Date: ${dateLong}*\n`;
-  msg += `🛏 Check-in: ${fmtDate(ev.dtstart)} | Check-out: ${fmtDate(ev.dtend)}\n`;
-  msg += `🌙 ${nights} night${nights !== 1 ? 's' : ''} stay\n`;
-  if (isSameDay) {
-    msg += `\n⚠️ *SAME-DAY TURNOVER — PRIORITY CLEAN*\n`;
-    msg += `Next guest arrives: ${fmtDate(nextEv.dtstart)}\n`;
+  let msg;
+  if (type === 'checkin') {
+    msg  = `🏠 *PRE-ARRIVAL CLEAN*\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `📅 *Check-in: ${fmtDateLong(ev.dtstart)}*\n`;
+    msg += `🔑 Check-out: ${fmtDate(ev.dtend)}\n`;
+    msg += `🌙 ${nights} night${nights !== 1 ? 's' : ''} stay\n`;
+  } else {
+    msg  = `🧹 *POST-DEPARTURE CLEAN*\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `📅 *Check-out: ${fmtDateLong(ev.dtend)}*\n`;
+    msg += `✈️ Check-in was: ${fmtDate(ev.dtstart)}\n`;
+    msg += `🌙 ${nights} night${nights !== 1 ? 's' : ''} stay\n`;
+    if (isSameDay) {
+      msg += `\n⚠️ *SAME-DAY TURNOVER — PRIORITY CLEAN*\n`;
+      msg += `Next guest arrives: ${fmtDate(nextEv.dtstart)}\n`;
+    }
   }
   if (note) {
     msg += `\n📝 *Host Notes:*\n${note}\n`;
