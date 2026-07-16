@@ -409,19 +409,14 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
   background: var(--primary-dark) !important;
   border-color: var(--primary-dark) !important;
 }
-/* Regular booking events — exclude background events so they keep their own colour */
-.fc-event:not(.fc-bg-event) {
+.fc-event {
   background-color: var(--primary) !important;
   border: none !important;
   font-weight: 600;
   border-radius: 5px;
   cursor: pointer;
 }
-.fc-event:not(.fc-bg-event):hover { background-color: var(--primary-dark) !important; }
-
-/* Checkout day: subtle pink tint behind everything */
-.fc-bg-event { opacity: 1 !important; }
-.fc-checkout-hl { background-color: rgba(255, 56, 92, 0.18) !important; }
+.fc-event:hover { background-color: var(--primary-dark) !important; }
 [data-theme="dark"] .fc { color: var(--text); }
 [data-theme="dark"] .fc-theme-standard td,
 [data-theme="dark"] .fc-theme-standard th,
@@ -719,6 +714,20 @@ function initFullCalendar(proxiedUrl) {
   // Destroy existing instance before re-init
   if (fcCalendar) { fcCalendar.destroy(); fcCalendar = null; }
 
+  // Build events from our already-parsed globalEvents.
+  // Extend each end by 1 day so the coral bar covers the checkout date too.
+  // Back-to-back bookings naturally stack on the shared day — no special handling needed.
+  const fcEvents = globalEvents.map(ev => {
+    const extendedEnd = new Date(ev.dtend);
+    extendedEnd.setDate(extendedEnd.getDate() + 1);
+    return {
+      title: ev.summary || 'Reserved',
+      start: ymd(ev.dtstart),
+      end: ymd(extendedEnd),
+      allDay: true
+    };
+  });
+
   fcCalendar = new FullCalendar.Calendar(el, {
     initialView: window.innerWidth < 600 ? 'listMonth' : 'dayGridMonth',
     headerToolbar: {
@@ -728,43 +737,11 @@ function initFullCalendar(proxiedUrl) {
     },
     firstDay: 1,
     height: 'auto',
-    events: {
-      url: proxiedUrl,
-      format: 'ics'
-    },
-    eventSourceSuccess: function(rawEvents) {
-      document.getElementById('fc-status').textContent =
-        `Live feed: ${rawEvents.length} event(s) loaded`;
-    },
-    eventSourceFailure: function() {
-      document.getElementById('fc-status').textContent =
-        '⚠️ Live calendar widget failed — cleaning timeline below still works.';
-    }
+    events: fcEvents
   });
 
   fcCalendar.render();
-
-  // Add subtle checkout-day highlights using our already-parsed events.
-  // Background events sit behind foreground events so back-to-back bookings
-  // still render correctly — the new booking bar overlaps the light tint.
-  if (globalEvents.length) {
-    fcCalendar.addEventSource({
-      id: 'checkout-highlights',
-      events: globalEvents.map(ev => {
-        // Use ISO date strings so FullCalendar treats these as all-day events
-        const checkoutStr = ymd(ev.dtend);
-        const nextDay = new Date(ev.dtend);
-        nextDay.setDate(nextDay.getDate() + 1);
-        const nextStr = ymd(nextDay);
-        return {
-          start: checkoutStr,
-          end: nextStr,
-          display: 'background',
-          classNames: ['fc-checkout-hl']
-        };
-      })
-    });
-  }
+  document.getElementById('fc-status').textContent = `${fcEvents.length} booking${fcEvents.length !== 1 ? 's' : ''} loaded`;
 
   // Open the calendar view panel automatically on first load
   const body = document.getElementById('calViewBody');
