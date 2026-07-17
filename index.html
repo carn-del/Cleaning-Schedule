@@ -996,11 +996,10 @@ function renderTimeline(events) {
     return;
   }
 
-  // Two cleaning tasks per booking: pre-arrival (check-in day) + post-departure (check-out day)
+  // One cleaning task per booking: post-departure on check-out day
   const rawTasks = [];
   events.forEach((ev, evIndex) => {
-    rawTasks.push({ type: 'checkin',  evIndex, date: ev.dtstart });
-    rawTasks.push({ type: 'checkout', evIndex, date: ev.dtend   });
+    rawTasks.push({ type: 'checkout', evIndex, date: ev.dtend });
   });
   rawTasks.sort((a, b) => a.date - b.date);
   globalTasks = rawTasks;
