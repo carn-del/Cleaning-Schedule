@@ -1016,7 +1016,7 @@ function renderCustomCalendar() {
         visEnd = 7; hasRCap = false;
       } else {
         const dow = (checkout.getDay() + 6) % 7;
-        visEnd  = isTurnoverDep ? dow + 0.5 : dow + 1;
+        visEnd  = dow + 0.5;
         hasRCap = true;
       }
 
