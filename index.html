@@ -788,7 +788,8 @@ async function syncNotesFromFirebase() {
     if (!res.ok) return;
     const data = await res.json();
     if (!data) return;
-    // data = { [fbKey(uid)]: { checkin: 'text', checkout: 'text' } }
+
+    // Sync text notes
     document.querySelectorAll('.notes-ta').forEach(ta => {
       const bucket = data[fbKey(ta.dataset.uid)];
       if (!bucket) return;
@@ -796,6 +797,17 @@ async function syncNotesFromFirebase() {
       if (text == null) return;
       ta.value = text;
       localStorage.setItem(`note_${ta.dataset.type}:${ta.dataset.uid}`, text);
+    });
+
+    // Sync flag checkboxes
+    document.querySelectorAll('.card-flags input[data-flag]').forEach(cb => {
+      const uid    = cb.closest('.bk-card').dataset.uid;
+      const bucket = data[fbKey(uid)];
+      if (!bucket) return;
+      const val = bucket[cb.dataset.flag];
+      if (val == null) return;
+      cb.checked = !!val;
+      localStorage.setItem(`flag_${cb.dataset.flag}:${uid}`, val ? '1' : '0');
     });
   } catch(e) { /* silent */ }
 }
@@ -1308,17 +1320,17 @@ function renderTimeline(events) {
 
       <div class="card-flags">
         <label class="card-flag">
-          <input type="checkbox" ${flagSofa ? 'checked' : ''}
+          <input type="checkbox" data-flag="sofabed" ${flagSofa ? 'checked' : ''}
             onchange="saveFlag('sofabed','${escHtml(uid)}',this.checked)">
           🛋 Sofa bed prep
         </label>
         <label class="card-flag">
-          <input type="checkbox" ${flagEarlyCI ? 'checked' : ''}
+          <input type="checkbox" data-flag="earlycheckin" ${flagEarlyCI ? 'checked' : ''}
             onchange="saveFlag('earlycheckin','${escHtml(uid)}',this.checked)">
           🌅 Early check-in
         </label>
         <label class="card-flag">
-          <input type="checkbox" ${flagLateCO ? 'checked' : ''}
+          <input type="checkbox" data-flag="latecheckout" ${flagLateCO ? 'checked' : ''}
             onchange="saveFlag('latecheckout','${escHtml(uid)}',this.checked)">
           🌙 Late check-out
         </label>
@@ -1404,6 +1416,11 @@ function saveNote(i) {
 
 function saveFlag(name, uid, checked) {
   localStorage.setItem(`flag_${name}:${uid}`, checked ? '1' : '0');
+  try {
+    fetch(`${FIREBASE_URL}/notes/${fbKey(uid)}/${name}.json`, {
+      method: 'PUT', body: JSON.stringify(checked)
+    });
+  } catch(e) { /* silent */ }
 }
 
 function shareWhatsApp(i) {
