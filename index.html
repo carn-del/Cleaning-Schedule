@@ -505,29 +505,34 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
 .cal-day-headers {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  padding: 0 3px;
   text-align: center;
   font-size: 11px; font-weight: 700;
   text-transform: uppercase; letter-spacing: .4px;
   color: var(--text-muted);
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 .cal-week-row {
   position: relative;
   height: 60px;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-bottom: 1px solid var(--border);
+  gap: 3px;
+  padding: 3px;
+  background: var(--border);
+  border-radius: 8px;
+  margin-bottom: 3px;
 }
-.cal-week-row:last-child { border-bottom: none; }
+.cal-week-row:last-child { margin-bottom: 0; }
 .cal-day-num {
   text-align: center;
   padding-top: 5px;
   font-size: 13px;
   color: var(--text-muted);
-  position: relative;
-  z-index: 1;
+  background: var(--surface);
+  border-radius: 5px;
 }
 .cal-day-num.in-month { color: var(--text); }
 .cal-day-num.today .cal-day-inner {
@@ -541,9 +546,10 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
 }
 .cal-bar-layer {
   position: absolute;
-  inset: 0;
+  inset: 3px;
   pointer-events: none;
   overflow: hidden;
+  z-index: 1;
 }
 .cal-bar {
   position: absolute;
