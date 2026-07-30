@@ -320,6 +320,37 @@ body {
   font-size: 12px; font-weight: 600;
 }
 
+/* ── CARD FLAGS ── */
+.card-flags {
+  border-top: 1px solid var(--border);
+  padding: 10px 15px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.card-flag {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 11px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; user-select: none;
+  transition: all .18s;
+  background: var(--surface2);
+  color: var(--text-muted);
+}
+.card-flag:has(input:checked) {
+  border-color: var(--primary);
+  background: rgba(255,56,92,.08);
+  color: var(--primary);
+  font-weight: 600;
+}
+.card-flag input[type="checkbox"] {
+  width: 15px; height: 15px;
+  accent-color: var(--primary);
+  cursor: pointer; flex-shrink: 0;
+}
+
 /* ── NOTES PANEL ── */
 .notes-panel {
   border-top: 1px solid var(--border);
@@ -1220,6 +1251,9 @@ function renderTimeline(events) {
     const uid          = ev.uid;
     const noteKey      = type === 'checkin' ? `note_checkin:${uid}` : `note_checkout:${uid}`;
     const savedNote    = localStorage.getItem(noteKey) || (type === 'checkout' ? localStorage.getItem(`note:${uid}`) : '') || '';
+    const flagSofa     = localStorage.getItem(`flag_sofabed:${uid}`) === '1';
+    const flagEarlyCI  = localStorage.getItem(`flag_earlycheckin:${uid}`) === '1';
+    const flagLateCO   = localStorage.getItem(`flag_latecheckout:${uid}`) === '1';
     const cardId       = `bkcard_${ti}`;
     const notesId      = `notes_${ti}`;
     const chevId       = `chev_${ti}`;
@@ -1271,6 +1305,24 @@ function renderTimeline(events) {
         <span class="badge badge-ci">✅ NEXT CHECK-IN</span>
         <span style="font-size:12px;color:var(--text-muted)">New guest arrives same day: <strong>${fmtDate(nextEv.dtstart)}</strong></span>
       </div>` : ''}
+
+      <div class="card-flags">
+        <label class="card-flag">
+          <input type="checkbox" ${flagSofa ? 'checked' : ''}
+            onchange="saveFlag('sofabed','${escHtml(uid)}',this.checked)">
+          🛋 Sofa bed prep
+        </label>
+        <label class="card-flag">
+          <input type="checkbox" ${flagEarlyCI ? 'checked' : ''}
+            onchange="saveFlag('earlycheckin','${escHtml(uid)}',this.checked)">
+          🌅 Early check-in
+        </label>
+        <label class="card-flag">
+          <input type="checkbox" ${flagLateCO ? 'checked' : ''}
+            onchange="saveFlag('latecheckout','${escHtml(uid)}',this.checked)">
+          🌙 Late check-out
+        </label>
+      </div>
 
       <div class="notes-panel" id="${notesId}">
         <div class="notes-lbl">${notesLabel}</div>
@@ -1348,6 +1400,10 @@ function saveNote(i) {
   localStorage.setItem(key, ta.value);
   saveNoteToFirebase(ta.dataset.uid, ta.dataset.type, ta.value);
   toast('✅ Note saved!');
+}
+
+function saveFlag(name, uid, checked) {
+  localStorage.setItem(`flag_${name}:${uid}`, checked ? '1' : '0');
 }
 
 function shareWhatsApp(i) {
