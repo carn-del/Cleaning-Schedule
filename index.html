@@ -468,6 +468,94 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
 [data-theme="dark"] .fc-list-day-cushion,
 [data-theme="dark"] .fc-list-table .fc-list-day th { background: var(--surface2); }
 
+/* ── CUSTOM MONTH CALENDAR ── */
+.cal-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0 10px;
+  gap: 8px;
+}
+.cal-nav-arrows { display: flex; gap: 4px; }
+.cal-nav-title  { font-size: 16px; font-weight: 700; }
+.cal-nav-views  { display: flex; gap: 4px; }
+.cal-view-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+}
+.cal-view-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.cal-nav-arrow {
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 17px; font-weight: 700;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: background .2s;
+}
+.cal-nav-arrow:hover { background: var(--border); }
+.cal-day-headers {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .4px;
+  color: var(--text-muted);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+.cal-week-row {
+  position: relative;
+  height: 60px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+.cal-week-row:last-child { border-bottom: none; }
+.cal-day-num {
+  text-align: center;
+  padding-top: 5px;
+  font-size: 13px;
+  color: var(--text-muted);
+  position: relative;
+  z-index: 1;
+}
+.cal-day-num.in-month { color: var(--text); }
+.cal-day-num.today .cal-day-inner {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto;
+  font-weight: 700;
+}
+.cal-bar-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.cal-bar {
+  position: absolute;
+  height: 22px;
+  top: 30px;
+  background: var(--primary);
+  border-radius: 0;
+}
+.cal-bar.cap-left  { border-radius: 11px 0 0 11px; }
+.cal-bar.cap-right { border-radius: 0 11px 11px 0; }
+.cal-bar.cap-both  { border-radius: 11px; }
+
 /* ── LOADER TABS ── */
 .loader-tabs {
   display: flex; gap: 6px; margin-bottom: 14px;
@@ -568,14 +656,26 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
     </div>
   </div>
 
-  <!-- ③ FULLCALENDAR VIEW (collapsible) -->
+  <!-- ③ CALENDAR VIEW (collapsible) -->
   <div class="card" id="calViewCard">
     <div class="cl-header" onclick="toggleCalView()">
       <span style="font-size:15px;font-weight:700;">📆 Calendar View</span>
       <span class="chevron-btn" id="calViewChevron">▼</span>
     </div>
     <div class="cl-body" id="calViewBody" style="padding:0 12px 16px;">
-      <div id="fc-calendar"></div>
+      <div class="cal-nav">
+        <div class="cal-nav-arrows">
+          <button class="cal-nav-arrow" onclick="calNav(-1)">‹</button>
+          <button class="cal-nav-arrow" onclick="calNav(1)">›</button>
+        </div>
+        <span id="calTitle" class="cal-nav-title"></span>
+        <div class="cal-nav-views">
+          <button class="cal-view-btn active" id="calMonthBtn" onclick="switchCalView('month')">Month</button>
+          <button class="cal-view-btn" id="calListBtn" onclick="switchCalView('list')">List</button>
+        </div>
+      </div>
+      <div id="custom-cal-grid"></div>
+      <div id="fc-calendar" style="display:none;"></div>
       <p id="fc-status" style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:8px;"></p>
     </div>
   </div>
@@ -787,64 +887,150 @@ function proxiedUrls(raw) {
 }
 
 // ═══════════════════════════════════════
-// FULLCALENDAR — live calendar view
+// CUSTOM MONTH CALENDAR + FC LIST VIEW
 // ═══════════════════════════════════════
-let fcCalendar = null;
+let calNavDate    = new Date();
+let calCurrentView = 'month';
+let fcCalendar    = null;
 
-function initFullCalendar(proxiedUrl) {
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() &&
+         a.getMonth()    === b.getMonth()    &&
+         a.getDate()     === b.getDate();
+}
+
+function calNav(dir) {
+  calNavDate = new Date(calNavDate.getFullYear(), calNavDate.getMonth() + dir, 1);
+  if (calCurrentView === 'month') {
+    renderCustomCalendar();
+  } else if (fcCalendar) {
+    fcCalendar.gotoDate(calNavDate);
+    document.getElementById('calTitle').textContent =
+      `${MONTHS_FULL[calNavDate.getMonth()]} ${calNavDate.getFullYear()}`;
+  }
+}
+
+function switchCalView(view) {
+  calCurrentView = view;
+  document.getElementById('calMonthBtn').classList.toggle('active', view === 'month');
+  document.getElementById('calListBtn').classList.toggle('active', view === 'list');
+  document.getElementById('custom-cal-grid').style.display = view === 'month' ? '' : 'none';
+  document.getElementById('fc-calendar').style.display     = view === 'list'  ? '' : 'none';
+  if (view === 'month') {
+    renderCustomCalendar();
+  } else {
+    initFCListView();
+  }
+}
+
+function initFCListView() {
   const el = document.getElementById('fc-calendar');
   if (!el) return;
+  if (fcCalendar) { fcCalendar.gotoDate(calNavDate); return; }
+  if (!globalEvents.length) return;
 
-  // Destroy existing instance before re-init
-  if (fcCalendar) { fcCalendar.destroy(); fcCalendar = null; }
-
-  // Two events per booking:
-  //   1. Main bar: dtstart → dtend (exclusive) = covers check-in through last booked night
-  //   2. Stub: dtend → dtend+1 = 1-day event on the checkout day, rendered at 20% width via CSS
-  // This ensures the stub always lands at the exact checkout-day column regardless of week boundaries.
-  const fcEvents = [];
-  globalEvents.forEach(ev => {
-    fcEvents.push({
-      title: ev.summary || 'Reserved',
-      start: ymd(ev.dtstart),
-      end: ymd(ev.dtend),
-      allDay: true
-    });
-    const stubEnd = new Date(ev.dtend);
-    stubEnd.setDate(stubEnd.getDate() + 1);
-    fcEvents.push({
-      title: '',
-      start: ymd(ev.dtend),
-      end: ymd(stubEnd),
-      allDay: true,
-      classNames: ['booking-stub']
-    });
-  });
+  const fcEvents = globalEvents.map(ev => ({
+    title: ev.summary || 'Reserved',
+    start: ymd(ev.dtstart),
+    end:   ymd(ev.dtend),
+    allDay: true
+  }));
 
   fcCalendar = new FullCalendar.Calendar(el, {
-    initialView: 'dayGridMonth',
-    headerToolbar: {
-      left: 'prev,next',
-      center: 'title',
-      right: 'dayGridMonth,listMonth'
-    },
+    initialView:   'listMonth',
+    initialDate:   calNavDate,
+    headerToolbar: false,
     firstDay: 1,
-    height: 'auto',
-    events: fcEvents
+    height:   'auto',
+    events:   fcEvents,
+    noEventsContent: 'No bookings this month'
   });
+  setTimeout(() => fcCalendar.render(), 0);
+}
 
-  // Reveal the panel BEFORE rendering so FullCalendar can measure its dimensions
-  const body = document.getElementById('calViewBody');
-  if (!body.classList.contains('open')) {
-    body.classList.add('open');
-    document.getElementById('calViewChevron').classList.add('open');
+function renderCustomCalendar() {
+  const el = document.getElementById('custom-cal-grid');
+  if (!el) return;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const year  = calNavDate.getFullYear();
+  const month = calNavDate.getMonth();
+
+  document.getElementById('calTitle').textContent = `${MONTHS_FULL[month]} ${year}`;
+
+  // Build week rows (Monday-first)
+  const firstOfMonth = new Date(year, month, 1);
+  const startOffset  = (firstOfMonth.getDay() + 6) % 7;
+  const cur          = new Date(year, month, 1 - startOffset);
+  const weeks        = [];
+  while (weeks.length < 6) {
+    const week = [];
+    for (let i = 0; i < 7; i++) { week.push(new Date(cur)); cur.setDate(cur.getDate() + 1); }
+    weeks.push(week);
+    if (cur.getMonth() > month && cur.getFullYear() >= year) break;
   }
 
-  // Defer render one tick so the browser applies the display change first
-  setTimeout(() => {
-    fcCalendar.render();
-    document.getElementById('fc-status').textContent = `${fcEvents.length} booking${fcEvents.length !== 1 ? 's' : ''} loaded`;
-  }, 0);
+  // Build turnover set: dates where one booking checks out and another checks in
+  const turnoverSet = new Set();
+  for (let i = 0; i + 1 < globalEvents.length; i++) {
+    if (isSameDay(globalEvents[i].dtend, globalEvents[i+1].dtstart)) {
+      turnoverSet.add(ymd(globalEvents[i].dtend));
+    }
+  }
+
+  let html = '<div class="cal-day-headers">';
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(h => { html += `<div>${h}</div>`; });
+  html += '</div>';
+
+  weeks.forEach(week => {
+    const wStart = week[0];
+    const wEnd   = new Date(wStart); wEnd.setDate(wStart.getDate() + 7);
+
+    html += '<div class="cal-week-row">';
+    week.forEach(day => {
+      const cls = isSameDay(day, today) ? 'today' : (day.getMonth() === month ? 'in-month' : '');
+      html += `<div class="cal-day-num ${cls}"><div class="cal-day-inner">${day.getDate()}</div></div>`;
+    });
+
+    html += '<div class="cal-bar-layer">';
+    globalEvents.forEach(ev => {
+      const checkin  = ev.dtstart;
+      const checkout = ev.dtend;
+      // Skip if no intersection with this week
+      if (checkin >= wEnd || checkout < wStart) return;
+
+      const isTurnoverArr = turnoverSet.has(ymd(checkin));
+      const isTurnoverDep = turnoverSet.has(ymd(checkout));
+
+      let visStart, visEnd, hasLCap, hasRCap;
+
+      if (checkin < wStart) {
+        visStart = 0; hasLCap = false;
+      } else {
+        const dow = (checkin.getDay() + 6) % 7;
+        visStart  = isTurnoverArr ? dow + 0.5 : dow;
+        hasLCap   = true;
+      }
+
+      if (checkout >= wEnd) {
+        visEnd = 7; hasRCap = false;
+      } else {
+        const dow = (checkout.getDay() + 6) % 7;
+        visEnd  = isTurnoverDep ? dow + 0.5 : dow + 1;
+        hasRCap = true;
+      }
+
+      if (visEnd <= visStart) return;
+
+      const l = (visStart / 7 * 100).toFixed(2);
+      const r = ((7 - visEnd) / 7 * 100).toFixed(2);
+      const capCls = (hasLCap && hasRCap) ? 'cap-both' : hasLCap ? 'cap-left' : hasRCap ? 'cap-right' : '';
+      html += `<div class="cal-bar ${capCls}" style="left:${l}%;right:${r}%"></div>`;
+    });
+    html += '</div></div>';
+  });
+
+  el.innerHTML = html;
 }
 
 function toggleCalView() {
@@ -852,10 +1038,20 @@ function toggleCalView() {
   const chev = document.getElementById('calViewChevron');
   body.classList.toggle('open');
   chev.classList.toggle('open');
-  // Render FullCalendar after reveal so it sizes correctly
-  if (body.classList.contains('open') && fcCalendar) {
-    setTimeout(() => fcCalendar.updateSize(), 50);
+  if (body.classList.contains('open') && calCurrentView === 'month') {
+    renderCustomCalendar();
   }
+}
+
+function initCalendar() {
+  const body = document.getElementById('calViewBody');
+  if (!body.classList.contains('open')) {
+    body.classList.add('open');
+    document.getElementById('calViewChevron').classList.add('open');
+  }
+  renderCustomCalendar();
+  document.getElementById('fc-status').textContent =
+    `${globalEvents.length} booking${globalEvents.length !== 1 ? 's' : ''} loaded`;
 }
 
 // ═══════════════════════════════════════
@@ -877,8 +1073,7 @@ function finishLoad(icalText, sourceUrl, proxiedUrl) {
   document.getElementById('lastSync').textContent = localStorage.getItem('icalSynced');
   const events = parseIcal(icalText);
   renderTimeline(events);
-  // Also wire up the live FullCalendar widget with the working proxy URL
-  if (proxiedUrl) initFullCalendar(proxiedUrl);
+  initCalendar();
   toast(`✅ Loaded ${events.length} booking${events.length !== 1 ? 's' : ''}`);
 }
 
@@ -1334,7 +1529,7 @@ async function tryLocalCalendar() {
     localStorage.setItem('icalProxied', './calendar.ics');
     const events = parseIcal(text);
     renderTimeline(events);
-    setTimeout(() => initFullCalendar('./calendar.ics'), 200);
+    setTimeout(() => initCalendar(), 0);
     toast(`✅ Calendar auto-loaded — ${events.length} booking${events.length !== 1 ? 's' : ''}`);
     return true;
   } catch (_) {
@@ -1362,7 +1557,7 @@ async function tryLocalCalendar() {
     try {
       const events = parseIcal(cache);
       renderTimeline(events);
-      if (proxied) setTimeout(() => initFullCalendar(proxied), 200);
+      setTimeout(() => initCalendar(), 0);
     } catch (_) { /* ignore stale cache */ }
   }
 })();
