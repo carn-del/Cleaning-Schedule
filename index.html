@@ -775,17 +775,18 @@ function fbKey(uid) { return uid.replace(/[.#$\/\[\]]/g, '_'); }
 
 async function saveNoteToFirebase(uid, type, text) {
   try {
-    await fetch(`${FIREBASE_URL}/notes/${fbKey(uid)}/${type}.json`, {
+    const r = await fetch(`${FIREBASE_URL}/notes/${fbKey(uid)}/${type}.json`, {
       method: 'PUT',
       body: JSON.stringify(text)
     });
-  } catch(e) { /* silent — localStorage copy already saved */ }
+    if (!r.ok) toast('⚠️ Cloud save failed — note stored locally only');
+  } catch(e) { toast('⚠️ Cloud save failed — note stored locally only'); }
 }
 
 async function syncNotesFromFirebase() {
   try {
     const res  = await fetch(`${FIREBASE_URL}/notes.json`);
-    if (!res.ok) return;
+    if (!res.ok) { toast('⚠️ Could not reach cloud sync'); return; }
     const data = await res.json();
     if (!data) return;
 
@@ -809,7 +810,7 @@ async function syncNotesFromFirebase() {
       cb.checked = !!val;
       localStorage.setItem(`flag_${cb.dataset.flag}:${uid}`, val ? '1' : '0');
     });
-  } catch(e) { /* silent */ }
+  } catch(e) { toast('⚠️ Cloud sync error — check connection'); }
 }
 
 // ═══════════════════════════════════════
@@ -1414,13 +1415,14 @@ function saveNote(i) {
   toast('✅ Note saved!');
 }
 
-function saveFlag(name, uid, checked) {
+async function saveFlag(name, uid, checked) {
   localStorage.setItem(`flag_${name}:${uid}`, checked ? '1' : '0');
   try {
-    fetch(`${FIREBASE_URL}/notes/${fbKey(uid)}/${name}.json`, {
+    const r = await fetch(`${FIREBASE_URL}/notes/${fbKey(uid)}/${name}.json`, {
       method: 'PUT', body: JSON.stringify(checked)
     });
-  } catch(e) { /* silent */ }
+    if (!r.ok) toast('⚠️ Cloud save failed — change stored locally only');
+  } catch(e) { toast('⚠️ Cloud save failed — change stored locally only'); }
 }
 
 function shareWhatsApp(i) {
@@ -1591,6 +1593,10 @@ function toggleChecklist() {
 }
 
 buildChecklist();
+
+// Re-sync notes & flags from Firebase every 30 seconds so changes on one
+// device appear on another without a full page reload.
+setInterval(() => { if (globalEvents.length) syncNotesFromFirebase(); }, 30000);
 
 // ═══════════════════════════════════════
 // AUTO-LOAD FROM GITHUB ACTIONS calendar.ics
