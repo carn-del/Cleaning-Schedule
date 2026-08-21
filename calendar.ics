@@ -1,158 +1,50 @@
-BEGIN:VCALENDAR
-PRODID:-//Airbnb Inc//Hosting Calendar 1.0//EN
-CALSCALE:GREGORIAN
-VERSION:2.0
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20260817
-DTEND;VALUE=DATE:20260822
-SUMMARY:Reserved
-UID:1418fb94e984-3c8fa8668fced8aae3f9f5313325bb56@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMQKBQAMMM\nPhone Number (Last 4 Digits): 1203
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20260822
-DTEND;VALUE=DATE:20260826
-SUMMARY:Reserved
-UID:1418fb94e984-6eb7c9e494888e5c3d1c54266b41e260@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMET5FBWTE\nPhone Number (Last 4 Digits): 8188
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20260828
-DTEND;VALUE=DATE:20260831
-SUMMARY:Reserved
-UID:1418fb94e984-5570151461b259ca46564e70af14dcaf@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMZ2JK55HB\nPhone Number (Last 4 Digits): 4004
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20260831
-DTEND;VALUE=DATE:20260903
-SUMMARY:Reserved
-UID:1418fb94e984-9f4b657ce3b1d9dd246eb47be5f7517d@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMFFB4K94N\nPhone Number (Last 4 Digits): 8485
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20260904
-DTEND;VALUE=DATE:20260908
-SUMMARY:Reserved
-UID:1418fb94e984-3d3f03cbce418def59a091ce99b41501@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMCSXMS9S8\nPhone Number (Last 4 Digits): 9848
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20260908
-DTEND;VALUE=DATE:20260912
-SUMMARY:Reserved
-UID:1418fb94e984-db122ed272092784929195c0f07c4ffe@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HM42QJKBJH\nPhone Number (Last 4 Digits): 4070
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20260912
-DTEND;VALUE=DATE:20260916
-SUMMARY:Reserved
-UID:1418fb94e984-6370ff8a9591c45f2d9c7fda495a04ca@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMCAYN4EZ3\nPhone Number (Last 4 Digits): 5641
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20260917
-DTEND;VALUE=DATE:20260922
-SUMMARY:Reserved
-UID:1418fb94e984-1568a189d9ee7c2b12251586a107b09e@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMQWKQPCJ9\nPhone Number (Last 4 Digits): 5167
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20260924
-DTEND;VALUE=DATE:20260926
-SUMMARY:Reserved
-UID:1418fb94e984-1265fb2a9751f19f9d8925e23be9a7f7@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HM9P4RSQFS\nPhone Number (Last 4 Digits): 4513
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20260926
-DTEND;VALUE=DATE:20260930
-SUMMARY:Reserved
-UID:1418fb94e984-e8a3c24ed313a68f6a14ebf6fffc99b6@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMKS5TWN2R\nPhone Number (Last 4 Digits): 9086
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20261001
-DTEND;VALUE=DATE:20261004
-SUMMARY:Reserved
-UID:1418fb94e984-50f515392b5e1ace231af9d95072bfec@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMZKJBX2RR\nPhone Number (Last 4 Digits): 6815
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20261005
-DTEND;VALUE=DATE:20261007
-SUMMARY:Reserved
-UID:1418fb94e984-a962d3e119576d0152e0348f33b46f04@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HM53ZSBT9E\nPhone Number (Last 4 Digits): 7712
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20261009
-DTEND;VALUE=DATE:20261012
-SUMMARY:Reserved
-UID:1418fb94e984-2d5af4654b65fc14677f9df308e83ba8@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMR23E9QWT\nPhone Number (Last 4 Digits): 4441
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20261014
-DTEND;VALUE=DATE:20261018
-SUMMARY:Reserved
-UID:1418fb94e984-e23597a61e2a01830ca37e39581e2e5d@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMESDAEX8Z\nPhone Number (Last 4 Digits): 7230
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20261020
-DTEND;VALUE=DATE:20261026
-SUMMARY:Reserved
-UID:1418fb94e984-9f83236eceafcb04c2b381f1076bba50@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMCBZQAEHY\nPhone Number (Last 4 Digits): 9846
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20261030
-DTEND;VALUE=DATE:20261105
-SUMMARY:Reserved
-UID:1418fb94e984-526ed21bba7edf6eeccbc2ce9c1fefe9@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMWH5XDPQR\nPhone Number (Last 4 Digits): 9712
-END:VEVENT
-BEGIN:VEVENT
-DTSTAMP:20260821T074039Z
-DTSTART;VALUE=DATE:20261230
-DTEND;VALUE=DATE:20270102
-SUMMARY:Reserved
-UID:1418fb94e984-a47b91619da6380d8a0eb6d05a346d4f@airbnb.com
-DESCRIPTION:Reservation URL: https://www.airbnb.com/hosting/reservations/de
- tails/HMT5Z99T82\nPhone Number (Last 4 Digits): 5124
-END:VEVENT
-END:VCALENDAR
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>503 Service Unavailable - Airbnb</title>
+
+  <link href="https://a0.muscache.com/airbnb/static/packages/common_o2.1-39a35b3574fe2cc79038c20fabd3669c.css" media="all" rel="stylesheet" type="text/css">
+
+  <link rel="shortcut icon" type="image/x-icon" href="https://a1.muscache.com/airbnb/static/logotype_favicon_pretzel-114df7f43fae7dd6dbc4ab074d934da5.ico">
+
+  <!-- Replace by loading from stylesheet -->
+  <style type="text/css">
+    .text-ginormous {
+      font-size: 85px;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="airbnb-header">
+    <a href="/" class="header-belo"></a>
+  </header>
+  <div class="page-container-responsive space-top-8 space-8">
+    <div class="row space-6">
+      <div class="col-md-6">
+        <h1 class="text-jumbo text-ginormous">Stay tuned</h1>
+        <h6>Error code: 503</h6>
+
+        <p>
+          Airbnb is temporarily unavailable, but we're working hard to fix the problem.
+          We'll be up and running soon! Keep an eye on our <a href="https://www.twitter.com/AirbnbHelp">Twitter account</a> for updates.
+        </p>
+
+        <p>
+          If you need help with an ongoing reservation or for urgent issues, tweet us <a href="https://www.twitter.com/AirbnbHelp">@AirbnbHelp</a>.
+        </p>
+
+        <p>Please note, during site downtime, our response times may be longer than usual.</p>
+
+        <p>Thanks for your patience!</p>
+      </div>
+      <div class="col-md-5 col-md-offset-1 text-center-sm">
+        <img src="https://assets.airbnb.com/images/maintenance/404-Airbnb_final.gif" width="313" height="428" alt="Girl has dropped her ice cream.">
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
