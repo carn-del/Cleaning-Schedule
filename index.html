@@ -768,16 +768,40 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
 // ═══════════════════════════════════════
 // FIREBASE — shared notes storage
 // ═══════════════════════════════════════
-const FIREBASE_URL = 'https://airbnb-cleaner-calendar-default-rtdb.asia-southeast1.firebasedatabase.app';
+const FIREBASE_URL     = 'https://airbnb-cleaner-calendar-default-rtdb.asia-southeast1.firebasedatabase.app';
+const FIREBASE_API_KEY = 'PASTE_YOUR_WEB_API_KEY_HERE'; // Firebase Console → Project Settings → Web API key
 
 // Firebase keys can't contain . # $ / [ ]
 function fbKey(uid) { return uid.replace(/[.#$\/\[\]]/g, '_'); }
 
+// Anonymous auth token — obtained once per session, attached to every request.
+// This satisfies Firebase rules: { "rules": { "notes": { ".read": "auth != null", ".write": "auth != null" } } }
+let fbToken = null;
+
+async function ensureFbAuth() {
+  if (fbToken) return fbToken;
+  try {
+    const r = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnSecureToken: true }) }
+    );
+    const d = await r.json();
+    if (d.idToken) { fbToken = d.idToken; return fbToken; }
+  } catch(e) {}
+  return null;
+}
+
+// Returns the full URL for a Firebase REST path, with auth token appended.
+async function fbUrl(path) {
+  const token = await ensureFbAuth();
+  return `${FIREBASE_URL}/${path}.json${token ? `?auth=${token}` : ''}`;
+}
+
 async function saveNoteToFirebase(uid, type, text) {
   try {
-    const r = await fetch(`${FIREBASE_URL}/notes/${fbKey(uid)}/${type}.json`, {
-      method: 'PUT',
-      body: JSON.stringify(text)
+    const r = await fetch(await fbUrl(`notes/${fbKey(uid)}/${type}`), {
+      method: 'PUT', body: JSON.stringify(text)
     });
     if (!r.ok) toast('⚠️ Cloud save failed — note stored locally only');
   } catch(e) { toast('⚠️ Cloud save failed — note stored locally only'); }
@@ -785,7 +809,7 @@ async function saveNoteToFirebase(uid, type, text) {
 
 async function syncNotesFromFirebase() {
   try {
-    const res  = await fetch(`${FIREBASE_URL}/notes.json`);
+    const res  = await fetch(await fbUrl('notes'));
     if (!res.ok) { toast('⚠️ Could not reach cloud sync'); return; }
     const data = await res.json();
     if (!data) return;
@@ -1418,7 +1442,7 @@ function saveNote(i) {
 async function saveFlag(name, uid, checked) {
   localStorage.setItem(`flag_${name}:${uid}`, checked ? '1' : '0');
   try {
-    const r = await fetch(`${FIREBASE_URL}/notes/${fbKey(uid)}/${name}.json`, {
+    const r = await fetch(await fbUrl(`notes/${fbKey(uid)}/${name}`), {
       method: 'PUT', body: JSON.stringify(checked)
     });
     if (!r.ok) toast('⚠️ Cloud save failed — change stored locally only');
