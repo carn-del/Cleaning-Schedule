@@ -646,7 +646,7 @@ progress::-moz-progress-bar { background: var(--green); border-radius: 3px; }
             onkeydown="if(event.key==='Enter') saveGateCode()">
           <button class="btn btn-green btn-sm" onclick="saveGateCode()">💾 Save</button>
         </div>
-        <p class="security-note">⚠️ Note: For security updates only. Use your physical keys for normal entry.</p>
+        <p class="security-note">Code is synced to all devices. Update here whenever the code changes.</p>
       </div>
 
       <!-- Supply Closet — static, hardcoded -->
@@ -867,22 +867,40 @@ function toast(msg) {
 }
 
 // ═══════════════════════════════════════
-// ACCESS CODES — localStorage
+// ACCESS CODES — localStorage + Firebase
 // ═══════════════════════════════════════
-function initGateCode() {
-  const v = localStorage.getItem('gateCode');
-  if (v) {
-    document.getElementById('gateDisplay').textContent = v;
-    document.getElementById('gateInput').value = v;
-  }
+function applyGateCode(v) {
+  document.getElementById('gateDisplay').textContent = v;
+  document.getElementById('gateInput').value = v;
 }
 
-function saveGateCode() {
+async function initGateCode() {
+  const cached = localStorage.getItem('gateCode');
+  if (cached) applyGateCode(cached);
+  try {
+    const res = await fetch(await fbUrl('config/gateCode'));
+    if (res.ok) {
+      const v = await res.json();
+      if (v) {
+        applyGateCode(v);
+        localStorage.setItem('gateCode', v);
+      }
+    }
+  } catch(e) {}
+}
+
+async function saveGateCode() {
   const v = document.getElementById('gateInput').value.trim();
   if (!v) { toast('⚠️ Please enter a code first'); return; }
   localStorage.setItem('gateCode', v);
-  document.getElementById('gateDisplay').textContent = v;
-  toast('✅ Gate code saved!');
+  applyGateCode(v);
+  try {
+    const r = await fetch(await fbUrl('config/gateCode'), {
+      method: 'PUT', body: JSON.stringify(v)
+    });
+    if (r.ok) { toast('✅ Gate code saved & synced!'); }
+    else       { toast('✅ Gate code saved locally (cloud sync failed)'); }
+  } catch(e) {  toast('✅ Gate code saved locally (cloud sync failed)'); }
 }
 
 initGateCode();
@@ -1530,7 +1548,7 @@ const REFILL_ITEMS = [
   'Conditioner',
   'Toilet cleaning gel',
   'Air freshener',
-  'Laundry liquid (preferably pods)',
+  'Laundry liquid',
   'Trash bags',
   'Kitchen cleaning spray',
   'Dishwashing tablets',
