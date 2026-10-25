@@ -1509,7 +1509,7 @@ function shareWhatsApp(i) {
 const CLEANING_TASKS = [
   'Strip all bed linens and pillowcases',
   'Make beds with fresh clean linens',
-  'Vacuum all floors, carpets & rugs',
+  '<strong>Vacuum all floors, carpets & rugs</strong>',
   'Mop hard floors',
   'Sanitise toilet, sink & shower/bath',
   'Wipe bathroom mirrors & fixtures',
@@ -1521,7 +1521,7 @@ const CLEANING_TASKS = [
   'Dust furniture, shelves & surfaces',
   'Wipe light switches & door handles',
   'Check under beds & sofas for lost items',
-  'Inspect sofa for crumbs & dirt — unfold & pull out sofa bed to check gaps (especially if sofa bed was used)',
+  '<strong>Inspect sofa for crumbs & dirt — unfold & pull out sofa bed to check gaps (especially if sofa bed was used)</strong>',
   'Air out the property (open windows)',
   'Final walkthrough — all rooms ✔',
 ];
@@ -1536,27 +1536,27 @@ const INVENTORY_ITEMS = [
   '4 throw pillows',
   'Utensils in the drawer',
   'At least 6 of each: bowls, plates, mugs, wine glasses, cups & children\'s utensils (cupboard above coffee machine)',
-  'Check each kitchen drawer layout matches reference photos — take photos of each drawer and share with host',
+  '<strong>Check each kitchen drawer layout matches reference photos — take photos of each drawer and share with host</strong>',
 ];
 
 const REFILL_ITEMS = [
   'Toilet paper (min. 4 rolls)',
-  'Tissue box in bedroom',
+  '<strong>Tissue box in bedroom</strong>',
   'Hand soap',
   'Body wash',
   'Shampoo',
   'Conditioner',
-  'Toilet cleaning gel',
-  'Air freshener',
-  'Laundry liquid',
+  '<strong>Toilet cleaning gel</strong>',
+  '<strong>Air freshener</strong>',
+  '<strong>Laundry liquid</strong>',
   'Trash bags',
-  'Kitchen cleaning spray',
-  'Dishwashing tablets',
+  '<strong>Kitchen cleaning spray</strong>',
+  '<strong>Dishwashing tablets</strong>',
   'Dish soap',
-  'Sponge for washing dishes',
-  'Himalayan salt',
-  'Pepper',
-  'Cooking oil',
+  '<strong>Sponge for washing dishes</strong>',
+  '<strong>Himalayan salt</strong>',
+  '<strong>Pepper</strong>',
+  '<strong>Cooking oil</strong>',
   'Check & replace TV remote batteries',
   'Check & replace air conditioner remote batteries',
   'Inspect for burned-out light bulbs',
@@ -1593,7 +1593,7 @@ function makeCheckItem(label, id) {
   };
 
   const lbl = document.createElement('label');
-  lbl.className = 'cl-lbl'; lbl.htmlFor = id; lbl.textContent = label;
+  lbl.className = 'cl-lbl'; lbl.htmlFor = id; lbl.innerHTML = label;
 
   div.appendChild(cb); div.appendChild(lbl);
   return div;
